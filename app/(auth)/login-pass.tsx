@@ -15,7 +15,14 @@ export default function LoginPasswordPage() {
 
   const handleLogin = () => {
     setIsLoading(true);
-    setTimeout(() => { setIsLoading(false); router.replace("/(tabs)"); }, 1000);
+    setTimeout(() => {
+      setIsLoading(false);
+      if (router.canGoBack()) {
+        router.back();
+      } else {
+        router.replace("/(tabs)");
+      }
+    }, 1000);
   };
 
   return (
@@ -23,8 +30,17 @@ export default function LoginPasswordPage() {
       <View className="flex-1 bg-gray-50" style={{ paddingTop: insets.top, paddingBottom: insets.bottom }}>
         {/* 导航栏 */}
         <View className="flex-row items-center justify-between px-4 h-14">
-          <TouchableOpacity onPress={() => router.replace("/")} className="h-10 w-10 bg-white rounded-full items-center justify-center shadow-sm">
-            <ChevronLeft size={24} color="#333" />
+          <TouchableOpacity
+            onPress={() => {
+              if (router.canGoBack()) {
+                router.back();
+              } else {
+                router.replace("/(tabs)");
+              }
+            }}
+            className="h-10 w-10 bg-white rounded-full items-center justify-center shadow-sm"
+          >
+              <ChevronLeft size={24} color="#333" />
           </TouchableOpacity>
           <TouchableOpacity onPress={() => router.push("/(auth)/signup")}>
             <Text className="text-blue-600 font-medium">注册账号</Text>

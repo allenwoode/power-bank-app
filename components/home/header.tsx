@@ -13,7 +13,13 @@ export default function Header() {
       style={{ paddingTop: insets.top + 25, paddingBottom: insets.bottom }}
     >
       <Pressable
-        onPress={() => router.replace("/(auth)/login")}
+        onPress={() => {
+          if (router.canGoBack()) {
+            router.back();
+          } else {
+            router.push("/(auth)/login");
+          }
+        }}
         className="flex gap-2"
       >
         <View className="flex-row items-center justify-start gap-2">

@@ -33,11 +33,15 @@ export default function LoginCodePage() {
     setCountdown(60);
   };
 
-  const handleLogin = () => {
+    const handleLogin = () => {
     setIsLoading(true);
     setTimeout(() => {
       setIsLoading(false);
-      router.replace("/(tabs)");
+      if (router.canGoBack()) {
+        router.back();
+      } else {
+        router.push("/(tabs)");
+      }
     }, 1000);
   };
 
@@ -50,7 +54,13 @@ export default function LoginCodePage() {
         {/* 导航栏 */}
         <View className="flex-row items-center justify-between px-4 h-14">
           <TouchableOpacity
-            onPress={() => router.replace("/(tabs)")}
+            onPress={() => {
+              if (router.canGoBack()) {
+                router.back();
+              } else {
+                router.replace("/(tabs)");
+              }
+            }}
             className="h-10 w-10 bg-white rounded-full items-center justify-center shadow-sm"
           >
             <ChevronLeft size={24} color="#333" />
