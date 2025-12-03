@@ -1,0 +1,20 @@
+{
+  "cli": { "version": ">= 5.0.0" },
+  "build": {
+    "production-aab": {
+      "distribution": "store",
+      "android": {
+        "buildType": "app-bundle"
+      }
+    },
+    "production-apk": {
+      "distribution": "store",
+      "android": {
+        "buildType": "apk"
+      }
+    },
+    "preview": {
+      "android": { "buildType": "apk" }
+    }
+  }
+}
