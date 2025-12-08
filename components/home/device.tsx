@@ -18,12 +18,7 @@ interface DeviceItem {
   addedAt?: string;
 }
 
-const defaultDevices: DeviceItem[] = [
-  { id: "1", name: "迷你充电宝", type: "5000mAh", color: "#3B82F6" },
-  { id: "2", name: "中容量充电宝", type: "10000mAh", color: "#10B981" },
-  { id: "3", name: "大容量充电宝", type: "20000mAh", color: "#F59E0B" },
-  { id: "4", name: "超大容量充电宝", type: "30000mAh", color: "#EF4444" },
-];
+const defaultDevices: DeviceItem[] = [];
 
 export function Device() {
   const router = useRouter();

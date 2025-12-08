@@ -301,7 +301,12 @@ export default function DeviceDetailPage() {
 
             {/* 定位地图 */}
             <Pressable
-              onPress={() => router.push(`/(device)/map`)}
+              onPress={() =>
+                router.push({
+                  pathname: "/(device)/map",
+                  params: { lng: "113.9455", lat: "22.5431" },
+                })
+              }
               style={{ flex: 1 }}
             >
               <LinearGradient

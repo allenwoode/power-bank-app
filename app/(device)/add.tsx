@@ -24,7 +24,6 @@ import {
 import { BleManager } from "react-native-ble-plx";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import CustomAlert from "../../utils/my-alert";
-import { useCustomActionSheet } from "../../utils/show-action-sheet";
 
 interface BluetoothDevice {
   id: string;
@@ -37,6 +36,16 @@ interface BluetoothDevice {
 }
 
 let bleManager: BleManager | null = null;
+
+// 全局缓存，避免信号变化导致图标变化
+const deviceTypeCache = new Map<string, React.FC<any>>();
+const deviceTypeConfidence = new Map<string, "high" | "medium" | "low">();
+
+// 清理设备类型缓存
+const clearDeviceTypeCache = () => {
+  deviceTypeCache.clear();
+  deviceTypeConfidence.clear();
+};
 
 const getBleManager = async () => {
   try {
@@ -76,6 +85,11 @@ const getBleManager = async () => {
 const getRssiInfo = (
   rssi: number
 ): { color: string; level: number; icon: React.FC<any> } => {
+  // 处理无效的 RSSI 值
+  if (typeof rssi !== "number" || isNaN(rssi) || rssi === 0 || rssi === -999) {
+    return { color: "#6B7280", level: 0, icon: SignalLow }; // 灰色表示无信号
+  }
+
   if (rssi >= -50) {
     return { color: "#10B981", level: 4, icon: SignalHigh };
   } else if (rssi >= -70) {
@@ -88,16 +102,86 @@ const getRssiInfo = (
 };
 
 // 根据 manufacturerData 判断设备类型和图标
-const getDeviceTypeIcon = (manufacturerData?: string): React.FC<any> => {
+const getDeviceTypeIcon = (
+  manufacturerData?: string,
+  deviceName?: string,
+  deviceId?: string
+): React.FC<any> => {
+  // 如果已经缓存了，直接返回
+  if (
+    deviceId &&
+    deviceTypeCache.has(deviceId) &&
+    deviceTypeConfidence.get(deviceId) === "high"
+  ) {
+    console.log(
+      `[DeviceType] 使用缓存: ${deviceId} -> ${deviceTypeCache.get(deviceId) === Tv ? "Tv" : "Bluetooth"}`
+    );
+    return deviceTypeCache.get(deviceId)!;
+  }
+
+  let detectedType: React.FC<any> = Bluetooth; // 默认类型
+  let confidence: "high" | "medium" | "low" = "low";
+
+  // TODO: 此处 Tv 假设，和后续如果充电宝有指定的 manufacturerData 则改为对应图标
+  // TODO: 测试判断小米设备的 manufacturerData 格式， 如果后续充电宝有指定格式则改为对应逻辑
+
+  // 首先尝试通过 manufacturerData 判断
   if (manufacturerData) {
-    const buf = Buffer.from(manufacturerData, "base64");
-    if (buf.length >= 8 && buf[7] === 0x1f) {
-      console.log("小米设备 -> 电视");
-      return Tv;
+    try {
+      const buf = Buffer.from(manufacturerData, "base64");
+      if (buf.length >= 8 && buf[7] === 0x1f) {
+        detectedType = Tv;
+        confidence = "high"; // manufacturerData 匹配是最高置信度
+        console.log(
+          `[DeviceType] manufacturerData 识别: ${deviceId} -> Tv (high confidence)`
+        );
+      }
+    } catch (error) {
+      console.warn("Failed to parse manufacturerData:", error);
     }
   }
 
-  return Bluetooth;
+  // 如果 manufacturerData 没有识别出 Tv，尝试通过设备名称判断
+  if (detectedType === Bluetooth && deviceName) {
+    const name = deviceName.toLowerCase();
+    if (
+      name.includes("power") ||
+      name.includes("bank") ||
+      name.includes("充电") ||
+      name.includes("宝")
+    ) {
+      detectedType = Tv;
+      confidence = "medium"; // 名称匹配是中等
+      console.log(
+        `[DeviceType] 设备名称识别: ${deviceId} (${deviceName}) -> Tv (medium confidence)`
+      );
+    }
+  }
+
+  // 只有在没有缓存或新检测的 confidence 更高时才更新
+  if (deviceId) {
+    const currentConfidence = deviceTypeConfidence.get(deviceId) || "low";
+    const confidenceLevels = { low: 0, medium: 1, high: 2 };
+
+    if (
+      !deviceTypeCache.has(deviceId) ||
+      confidenceLevels[confidence] > confidenceLevels[currentConfidence]
+    ) {
+      deviceTypeCache.set(deviceId, detectedType);
+      deviceTypeConfidence.set(deviceId, confidence);
+      console.log(
+        `[DeviceType] 缓存更新: ${deviceId} -> ${detectedType === Tv ? "Tv" : "Bluetooth"} (${confidence})`
+      );
+    } else {
+      // 如果缓存的 confidence 更高，返回缓存的值
+      detectedType = deviceTypeCache.get(deviceId)!;
+      console.log(
+        `[DeviceType] 使用更高置信度缓存: ${deviceId} -> ${detectedType === Tv ? "Tv" : "Bluetooth"}`
+      );
+    }
+  }
+
+  return detectedType;
 };
 
 export default function AddDevicePage() {
@@ -112,7 +196,6 @@ export default function AddDevicePage() {
   );
   const [error, setError] = useState<string | null>(null);
   const devicesMapRef = useRef<Map<string, BluetoothDevice>>(new Map());
-  const { show } = useCustomActionSheet();
   const [alertVisible, setAlertVisible] = useState(false);
   const [alertConfig, setAlertConfig] = useState<{
     title: string;
@@ -136,6 +219,8 @@ export default function AddDevicePage() {
       setDevices([]);
       setSelectedDevices(new Set());
       devicesMapRef.current.clear();
+      // 清理设备类型缓存，为新的扫描会话做准备
+      clearDeviceTypeCache();
       setIsScanning(true);
 
       const manager = await getBleManager();
@@ -171,8 +256,21 @@ export default function AddDevicePage() {
         stopScanning();
       }, 30000);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "扫描失败");
+      console.error("Scan error:", err);
+      const errorMessage = err instanceof Error ? err.message : "扫描失败";
+      setError(errorMessage);
       setIsScanning(false);
+
+      // 显示错误提示
+      setAlertConfig({
+        title: "蓝牙启动失败",
+        message: `无法启动蓝牙扫描：${errorMessage}`,
+        primaryColor: "#EF4444",
+        confirmText: "确定",
+        showCancel: false,
+        onConfirm: () => setAlertVisible(false),
+      });
+      setAlertVisible(true);
     }
   };
 
@@ -183,46 +281,11 @@ export default function AddDevicePage() {
         await bleManager.stopDeviceScan();
       }
       setIsScanning(false);
+      // 不清理 deviceTypeCache，让识别结果在整个会话中保持
     } catch (err) {
       console.error("Stop scan error:", err);
     }
   };
-
-  // 脉冲动画
-  useEffect(() => {
-    if (isScanning) {
-      const animation = Animated.loop(
-        Animated.sequence([
-          Animated.parallel([
-            Animated.timing(scaleAnim, {
-              toValue: 1.8,
-              duration: 1500,
-              useNativeDriver: false,
-            }),
-            Animated.timing(opacityAnim, {
-              toValue: 0,
-              duration: 1500,
-              useNativeDriver: false,
-            }),
-          ]),
-          Animated.parallel([
-            Animated.timing(scaleAnim, {
-              toValue: 1,
-              duration: 0,
-              useNativeDriver: false,
-            }),
-            Animated.timing(opacityAnim, {
-              toValue: 1,
-              duration: 0,
-              useNativeDriver: false,
-            }),
-          ]),
-        ])
-      );
-      animation.start();
-      return () => animation.stop();
-    }
-  }, [isScanning, scaleAnim, opacityAnim]);
 
   // 脉冲动画
   useEffect(() => {
@@ -401,7 +464,11 @@ export default function AddDevicePage() {
                 contentContainerStyle={{ paddingBottom: insets.bottom + 50 }}
                 renderItem={({ item }) => {
                   const rssiInfo = getRssiInfo(item.rssi);
-                  const DeviceIcon = getDeviceTypeIcon(item.manufacturerData);
+                  const DeviceIcon = getDeviceTypeIcon(
+                    item.manufacturerData,
+                    item.name,
+                    item.id
+                  );
                   const isSelected = selectedDevices.has(item.id);
 
                   return (
