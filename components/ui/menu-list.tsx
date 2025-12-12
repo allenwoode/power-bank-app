@@ -1,7 +1,7 @@
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { ChevronRight } from "lucide-react-native";
 import React, { useState } from "react";
-import { Pressable, Text, View } from "react-native";
+import { Animated, Pressable, Text, View } from "react-native";
 
 export interface MenuItem {
   id: string;
@@ -9,10 +9,48 @@ export interface MenuItem {
   title: string;
   subtitle: string;
   onPress?: () => void;
+  showSwitch?: boolean;
+  switchValue?: boolean;
+  onSwitchChange?: (value: boolean) => void;
 }
 
 interface MenuListProps {
   items: MenuItem[];
+}
+
+function ToggleSwitch({ value }: { value: boolean }) {
+  const animatedValue = React.useRef(new Animated.Value(value ? 1 : 0)).current;
+
+  React.useEffect(() => {
+    Animated.timing(animatedValue, {
+      toValue: value ? 1 : 0,
+      duration: 200,
+      useNativeDriver: false,
+    }).start();
+  }, [value, animatedValue]);
+
+  const translateX = animatedValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: [2, 22],
+  });
+
+  const backgroundColor = animatedValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: ["#e5e7eb", "#3b82f6"],
+  });
+
+  return (
+    <View className="relative">
+      <Animated.View
+        className="w-12 h-6 rounded-full"
+        style={{ backgroundColor }}
+      />
+      <Animated.View
+        className="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow-sm"
+        style={{ transform: [{ translateX }] }}
+      />
+    </View>
+  );
 }
 
 export default function MenuList({ items }: MenuListProps) {
@@ -24,7 +62,13 @@ export default function MenuList({ items }: MenuListProps) {
       {items.map((item, index) => (
         <Pressable
           key={item.id}
-          onPress={item.onPress}
+          onPress={() => {
+            if (item.showSwitch && item.onSwitchChange) {
+              item.onSwitchChange(!item.switchValue);
+            } else if (item.onPress) {
+              item.onPress();
+            }
+          }}
           onPressIn={() => setPressedItem(item.id)}
           onPressOut={() => setPressedItem(null)}
           className={`flex-row items-center px-4 py-4 ${
@@ -52,10 +96,16 @@ export default function MenuList({ items }: MenuListProps) {
               {item.subtitle}
             </Text>
           </View>
-          <ChevronRight
-            size={20}
-            color={colorScheme === "dark" ? "white" : "#999"}
-          />
+          {item.showSwitch && item.onSwitchChange ? (
+            <ToggleSwitch
+              value={item.switchValue || false}
+            />
+          ) : (
+            <ChevronRight
+              size={20}
+              color={colorScheme === "dark" ? "white" : "#999"}
+            />
+          )}
         </Pressable>
       ))}
     </View>

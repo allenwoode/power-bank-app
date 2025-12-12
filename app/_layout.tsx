@@ -1,3 +1,4 @@
+import { OnboardingContext } from "@/context/onboarding-context";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { ActionSheetProvider } from "@expo/react-native-action-sheet";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -32,73 +33,66 @@ export default function RootLayout() {
     async function checkOnboardingStatus() {
       try {
         const introValue = await AsyncStorage.getItem("hasSeenIntro");
-        // hasSeenIntro 为 true 表示看过 intro
         setHasSeenIntro(introValue === "true");
       } catch (e) {
         console.error("AsyncStorage error:", e);
         setHasSeenIntro(false);
       } finally {
-        // 数据加载完毕，应用准备就绪
         setIsReady(true);
-        // 隐藏启动屏
         SplashScreen.hideAsync();
       }
     }
     checkOnboardingStatus();
-  }, [segments]);
+  }, []);
 
   useEffect(() => {
-    if (!isReady) return; // 等待状态加载完毕
+    if (!isReady) return;
 
-    // 当前路由是否为欢迎页或 intro 页
-    const inWelcomePage = segments[0] === "welcome";
-    const inIntroPage = segments[0] === "(welcome)" && segments[1] === "intro";
+    const inAuthGroup = segments[0] === "(welcome)";
 
-    // 情况 A: 如果没看完 intro，并且当前不在 welcome 也不在 intro 页面，则跳转到 welcome 重新开始
-    if (!hasSeenIntro && !inWelcomePage && !inIntroPage) {
-      router.replace("/welcome");
-    }
-    // 情况 B: 如果看完 intro，但当前还在 welcome 或 intro 页面，则跳转到主页
-    else if (hasSeenIntro && (inWelcomePage || inIntroPage)) {
+    if (hasSeenIntro === false && !inAuthGroup) {
+      router.replace("/(welcome)");
+    } else if (hasSeenIntro === true && inAuthGroup) {
       router.replace("/(tabs)");
     }
-    // 其他情况：路由正确，不做任何操作
-  }, [hasSeenIntro, isReady, router, segments]);
+  }, [hasSeenIntro, isReady, segments, router]);
 
   if (!isReady) {
     return null;
   }
 
   return (
-    <SafeAreaProvider>
-      <ActionSheetProvider>
-        <ThemeProvider
-          value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
-        >
-          <Stack
-            screenOptions={{
-              headerShown: false,
-              animation: "slide_from_right",
-            }}
+    <OnboardingContext.Provider
+      value={{ hasSeenIntro, setHasSeenIntro: (val) => setHasSeenIntro(val) }}
+    >
+      <SafeAreaProvider>
+        <ActionSheetProvider>
+          <ThemeProvider
+            value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
           >
-            <Stack.Screen name="welcome" options={{ animation: "fade" }} />
+            <Stack
+              screenOptions={{
+                headerShown: false,
+                animation: "slide_from_right",
+              }}
+            >
+              <Stack.Screen name="(welcome)" options={{ animation: "fade" }} />
 
-            <Stack.Screen name="(welcome)" options={{ animation: "fade" }} />
+              <Stack.Screen
+                name="(tabs)"
+                options={{ animation: "slide_from_right" }}
+              />
 
-            <Stack.Screen
-              name="(tabs)"
-              options={{ animation: "slide_from_right" }}
-            />
+              <Stack.Screen
+                name="(auth)"
+                options={{ animation: "fade_from_bottom" }}
+              />
+            </Stack>
 
-            <Stack.Screen
-              name="(auth)"
-              options={{ animation: "fade_from_bottom" }}
-            />
-          </Stack>
-
-          <StatusBar style="auto" />
-        </ThemeProvider>
-      </ActionSheetProvider>
-    </SafeAreaProvider>
+            <StatusBar style="auto" />
+          </ThemeProvider>
+        </ActionSheetProvider>
+      </SafeAreaProvider>
+    </OnboardingContext.Provider>
   );
 }

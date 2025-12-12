@@ -1,3 +1,4 @@
+import { useOnboarding } from "@/context/onboarding-context";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useDebouncedNavigation } from "@/hooks/use-debounced-navigation";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -20,19 +21,30 @@ const EasingStandard = Easing.out(Easing.exp);
 export default function WelcomePage() {
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
-  const { push } = useDebouncedNavigation(500);
+  const { push, replace } = useDebouncedNavigation(500);
+  const { setHasSeenIntro } = useOnboarding();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
 
   const handleFinish = async (path: string) => {
-    try {
-      await AsyncStorage.setItem("hasSeenWelcome", "true");
+    // 如果是跳转到 intro，不需要设置 hasSeenIntro
+    if (path.includes("intro")) {
       // @ts-ignore
       push(path);
+      return;
+    }
+
+    // 如果是跳过（跳转到 tabs），则设置 hasSeenIntro
+    try {
+      await AsyncStorage.setItem("hasSeenIntro", "true");
+      setHasSeenIntro(true);
+      // @ts-ignore
+      replace(path);
     } catch (error) {
       console.error("保存状态失败:", error);
+      setHasSeenIntro(true);
       // @ts-ignore
-      push(path);
+      replace(path);
     }
   };
 
@@ -164,16 +176,16 @@ export default function WelcomePage() {
             <ChevronRight size={24} color={isDark ? "black" : "white"} />
           </TouchableOpacity>
 
-          <View className="flex-row items-center ml-1">
+          {/* <View className="flex-row items-center ml-1">
             <Text className="text-gray-500 dark:text-gray-500 text-sm mr-2">
               {t("welcome-footer")}
             </Text>
-            {/* <TouchableOpacity onPress={() => handleFinish("/(auth)/login")}>
+            <TouchableOpacity onPress={() => handleFinish("/(auth)/login")}>
               <Text className="text-black dark:text-white font-bold text-sm underline decoration-2">
                 {t("welcome-sign-in")}
               </Text>
-            </TouchableOpacity> */}
-          </View>
+            </TouchableOpacity>
+          </View> */}
         </Animated.View>
       </View>
     </View>

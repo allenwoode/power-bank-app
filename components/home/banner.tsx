@@ -21,20 +21,20 @@ interface BannerItem {
 const bannerData: BannerItem[] = [
   {
     id: "1",
-    title: "此处展示 Banner",
-    subtitle: "这是一个示例横幅",
+    title: "",
+    subtitle: "",
     color: "#FF6B6B",
   },
   {
     id: "2",
-    title: "示例横幅 2",
-    subtitle: "这是第二个示例横幅",
+    title: "",
+    subtitle: "",
     color: "#4ECDC4",
   },
   {
     id: "3",
-    title: "示例横幅 3",
-    subtitle: "这是第三个示例横幅",
+    title: "",
+    subtitle: "",
     color: "#1A535C",
   },
 ];
@@ -104,8 +104,12 @@ export default function Banner() {
             key={index}
             className={`rounded-full ${
               index === activeIndex
-                ? colorScheme === "dark" ? "bg-white" : "bg-gray-800"
-                : colorScheme === "dark" ? "bg-gray-400" : "bg-gray-300"
+                ? colorScheme === "dark"
+                  ? "bg-white"
+                  : "bg-gray-800"
+                : colorScheme === "dark"
+                  ? "bg-gray-400"
+                  : "bg-gray-300"
             }`}
             style={{
               width: index === activeIndex ? 8 : 6,

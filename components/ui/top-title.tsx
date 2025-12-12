@@ -1,7 +1,7 @@
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useRouter } from "expo-router";
 import { ArrowLeft, Ellipsis } from "lucide-react-native";
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Animated, Pressable, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -83,7 +83,7 @@ export default function TopTitle({
       {/* 菜单 - 放在遮罩上方 */}
       {isMenuVisible && menuOptions.length > 0 && (
         <Animated.View
-          className="absolute right-4 bg-white border border-gray-200 rounded-lg shadow-2xl z-50 min-w-40"
+          className="absolute right-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-2xl z-50 min-w-40"
           style={{
             top: insets.top + 50,
             opacity: fadeAnim,
@@ -97,14 +97,20 @@ export default function TopTitle({
               android_ripple={{ color: "rgba(0, 0, 0, 0.05)" }}
               className={`px-4 py-2 flex-row items-center gap-2 ${
                 index !== menuOptions.length - 1
-                  ? "border-b border-gray-100"
+                  ? "border-b border-gray-100 dark:border-gray-600"
                   : ""
               }`}
             >
               {option.icon && (
-                <View className="flex-shrink-0">{option.icon}</View>
+                <View className="flex-shrink-0">
+                  {React.isValidElement(option.icon)
+                    ? React.cloneElement(option.icon as React.ReactElement<{color: string}>, {
+                        color: colorScheme === "dark" ? "#d1d5db" : "#374151"
+                      })
+                    : option.icon}
+                </View>
               )}
-              <Text className="text-gray-800 text-base">{option.label}</Text>
+              <Text className="text-gray-800 dark:text-gray-200 text-base">{option.label}</Text>
             </Pressable>
           ))}
         </Animated.View>

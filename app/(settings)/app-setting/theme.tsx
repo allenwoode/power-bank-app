@@ -1,17 +1,17 @@
 import Card from "@/components/ui/card";
 import RadioSelect, { SelectOption } from "@/components/ui/radio-select";
 import TopTitle from "@/components/ui/top-title";
-import { useColorScheme } from "@/hooks/use-color-scheme";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Stack } from "expo-router";
 import { Palette } from "lucide-react-native";
+import { useColorScheme as useNativeWindColorScheme } from "nativewind";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Appearance, View } from "react-native";
 
 export default function ThemePage() {
   const { t } = useTranslation();
-  const colorScheme = useColorScheme();
+  const { setColorScheme } = useNativeWindColorScheme();
   const [selectedTheme, setSelectedTheme] = useState<
     "light" | "dark" | "system" | null
   >(null);
@@ -57,8 +57,14 @@ export default function ThemePage() {
     try {
       setSelectedTheme(themeId);
       await AsyncStorage.setItem("themePreference", themeId);
-      const theme = themeId === "system" ? null : themeId;
-      Appearance.setColorScheme(theme);
+      
+      if (themeId === "system") {
+        setColorScheme("system");
+        Appearance.setColorScheme(null);
+      } else {
+        setColorScheme(themeId);
+        Appearance.setColorScheme(themeId);
+      }
     } catch (error) {
       console.error("保存主题偏好设置失败:", error);
     }
