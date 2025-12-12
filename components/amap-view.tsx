@@ -1,36 +1,36 @@
-import { useRef } from "react";
-import { WebView } from "react-native-webview";
+import { useRef } from 'react';
+import { WebView } from 'react-native-webview';
 
 export type RoutePoint = {
-  lng: number;
-  lat: number;
-  color?: string; // 折线到下一点的颜色
-  isStart?: boolean;
-  isEnd?: boolean;
-  isStay?: boolean; // 停留点
+	lng: number;
+	lat: number;
+	color?: string; // 折线到下一点的颜色
+	isStart?: boolean;
+	isEnd?: boolean;
+	isStay?: boolean; // 停留点
 };
 
 export default function AMapWebView({
-  coord,
-  routeCoords,
-  onCoordinateChange,
+	coord,
+	routeCoords,
+	onCoordinateChange,
 }: {
-  coord?: { lng: number; lat: number };
-  routeCoords?: RoutePoint[];
-  onCoordinateChange?: (coord: { lng: number; lat: number }) => void;
+	coord?: { lng: number; lat: number };
+	routeCoords?: RoutePoint[];
+	onCoordinateChange?: (coord: { lng: number; lat: number }) => void;
 }) {
-  const webViewRef = useRef<WebView>(null);
+	const webViewRef = useRef<WebView>(null);
 
-  const routeJs = routeCoords
-    ? `[${routeCoords
-        .map(
-          (c) =>
-            `{lng:${c.lng},lat:${c.lat},color:"${c.color ?? "#3366FF"}",isStart:${!!c.isStart},isEnd:${!!c.isEnd},isStay:${!!c.isStay}}`
-        )
-        .join(",")}]`
-    : "[]";
+	const routeJs = routeCoords
+		? `[${routeCoords
+				.map(
+					(c) =>
+						`{lng:${c.lng},lat:${c.lat},color:"${c.color ?? '#3366FF'}",isStart:${!!c.isStart},isEnd:${!!c.isEnd},isStay:${!!c.isStay}}`
+				)
+				.join(',')}]`
+		: '[]';
 
-  const html = `
+	const html = `
     <!DOCTYPE html>
     <html>
       <head>
@@ -104,16 +104,16 @@ export default function AMapWebView({
     </html>
   `;
 
-  return (
-    <WebView
-      ref={webViewRef}
-      originWhitelist={["*"]}
-      source={{ html }}
-      className="flex-1"
-      onMessage={(event) => {
-        const data = JSON.parse(event.nativeEvent.data);
-        onCoordinateChange?.(data);
-      }}
-    />
-  );
+	return (
+		<WebView
+			ref={webViewRef}
+			originWhitelist={['*']}
+			source={{ html }}
+			className="flex-1"
+			onMessage={(event) => {
+				const data = JSON.parse(event.nativeEvent.data);
+				onCoordinateChange?.(data);
+			}}
+		/>
+	);
 }

@@ -1,17 +1,17 @@
 {
-  "editor.codeActionsOnSave": {
-    "source.fixAll": "explicit",
-    "source.organizeImports": "explicit",
-    "source.sortMembers": "explicit"
-  },
-  "cSpell.words": [
-    "AMAP",
-    "dimezis",
-    "lnglat",
-    "nativewind",
-    "Pressable",
-    "rssi"
-  ],
-  "java.configuration.updateBuildConfiguration": "automatic",
-  "java.compile.nullAnalysis.mode": "automatic"
+	"editor.codeActionsOnSave": {
+		"source.fixAll": "explicit",
+		"source.organizeImports": "explicit",
+		"source.sortMembers": "explicit"
+	},
+	"cSpell.words": [
+		"AMAP",
+		"dimezis",
+		"lnglat",
+		"nativewind",
+		"Pressable",
+		"rssi"
+	],
+	"java.configuration.updateBuildConfiguration": "automatic",
+	"java.compile.nullAnalysis.mode": "automatic"
 }

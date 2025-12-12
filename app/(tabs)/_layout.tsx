@@ -1,80 +1,80 @@
-import { CustomTabBar } from "@/components/custom-tab-bar";
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import { Tabs, useFocusEffect } from "expo-router";
-import { Home, User } from "lucide-react-native";
-import React, { useCallback, useRef } from "react";
-import { useTranslation } from "react-i18next";
-import { BackHandler, Platform, ToastAndroid } from "react-native";
-import RNExitApp from "react-native-exit-app";
+import { CustomTabBar } from '@/components/custom-tab-bar';
+import { Colors } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+import { Tabs, useFocusEffect } from 'expo-router';
+import { Home, User } from 'lucide-react-native';
+import React, { useCallback, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
+import { BackHandler, Platform, ToastAndroid } from 'react-native';
+import RNExitApp from 'react-native-exit-app';
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
-  const { t } = useTranslation();
+	const colorScheme = useColorScheme();
+	const { t } = useTranslation();
 
-  // 双击返回退出应用
-  const lastBackPress = useRef(0);
+	// 双击返回退出应用
+	const lastBackPress = useRef(0);
 
-  useFocusEffect(
-    useCallback(() => {
-      if (Platform.OS !== "android") return;
+	useFocusEffect(
+		useCallback(() => {
+			if (Platform.OS !== 'android') return;
 
-      const onBackPress = () => {
-        const now = Date.now();
+			const onBackPress = () => {
+				const now = Date.now();
 
-        /*
-         * 直接调用 BackHandler.exitApp() 再启动应用会丢失动画
-         * 先调用 BackHandler.exitApp() 然后使用异步 RNExitApp.exitApp() 杀进程
-         * TODO: BackHandler.exitApp() 修复此问题后可移除 RNExitApp 相关代码
-         */
-        if (lastBackPress.current && now - lastBackPress.current < 2000) {
-          BackHandler.exitApp();
+				/*
+				 * 直接调用 BackHandler.exitApp() 再启动应用会丢失动画
+				 * 先调用 BackHandler.exitApp() 然后使用异步 RNExitApp.exitApp() 杀进程
+				 * TODO: BackHandler.exitApp() 修复此问题后可移除 RNExitApp 相关代码
+				 */
+				if (lastBackPress.current && now - lastBackPress.current < 2000) {
+					BackHandler.exitApp();
 
-          setTimeout(() => {
-            RNExitApp.exitApp();
-          }, 0);
+					setTimeout(() => {
+						RNExitApp.exitApp();
+					}, 0);
 
-          return true;
-        }
+					return true;
+				}
 
-        // 第一次返回
-        lastBackPress.current = now;
-        ToastAndroid.show(t("press-back-again-to-exit"), ToastAndroid.SHORT);
-        return true;
-      };
+				// 第一次返回
+				lastBackPress.current = now;
+				ToastAndroid.show(t('press-back-again-to-exit'), ToastAndroid.SHORT);
+				return true;
+			};
 
-      const subscription = BackHandler.addEventListener(
-        "hardwareBackPress",
-        onBackPress
-      );
+			const subscription = BackHandler.addEventListener(
+				'hardwareBackPress',
+				onBackPress
+			);
 
-      return () => subscription.remove();
-    }, [t])
-  );
+			return () => subscription.remove();
+		}, [t])
+	);
 
-  return (
-    <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? "light"].tint,
-        headerShown: false,
-      }}
-      tabBar={(props) => <CustomTabBar {...props} />}
-    >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: t("tab-home"),
-          tabBarIcon: ({ color }) => <Home size={28} color={color} />,
-        }}
-      />
+	return (
+		<Tabs
+			screenOptions={{
+				tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
+				headerShown: false,
+			}}
+			tabBar={(props) => <CustomTabBar {...props} />}
+		>
+			<Tabs.Screen
+				name="index"
+				options={{
+					title: t('tab-home'),
+					tabBarIcon: ({ color }) => <Home size={28} color={color} />,
+				}}
+			/>
 
-      <Tabs.Screen
-        name="mine"
-        options={{
-          title: t("tab-mine"),
-          tabBarIcon: ({ color }) => <User size={28} color={color} />,
-        }}
-      />
-    </Tabs>
-  );
+			<Tabs.Screen
+				name="mine"
+				options={{
+					title: t('tab-mine'),
+					tabBarIcon: ({ color }) => <User size={28} color={color} />,
+				}}
+			/>
+		</Tabs>
+	);
 }

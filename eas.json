@@ -1,24 +1,24 @@
 {
-  "cli": { "version": ">= 5.0.0" },
-  "build": {
-    "production-aab": {
-      "distribution": "store",
-      "android": {
-        "buildType": "app-bundle",
-        "gradleCommand": ":app:bundleRelease"
-      },
-      "env": {
-        "GRADLE_BUILD_PROPERTY_org_gradle_jvmargs": "-Xmx4g"
-      }
-    },
-    "production-apk": {
-      "distribution": "store",
-      "android": {
-        "buildType": "apk"
-      }
-    },
-    "preview": {
-      "android": { "buildType": "apk" }
-    }
-  }
+	"cli": { "version": ">= 5.0.0" },
+	"build": {
+		"production-aab": {
+			"distribution": "store",
+			"android": {
+				"buildType": "app-bundle",
+				"gradleCommand": ":app:bundleRelease"
+			},
+			"env": {
+				"GRADLE_BUILD_PROPERTY_org_gradle_jvmargs": "-Xmx4g"
+			}
+		},
+		"production-apk": {
+			"distribution": "store",
+			"android": {
+				"buildType": "apk"
+			}
+		},
+		"preview": {
+			"android": { "buildType": "apk" }
+		}
+	}
 }

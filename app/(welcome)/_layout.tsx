@@ -1,10 +1,10 @@
-import { Stack } from "expo-router";
+import { Stack } from 'expo-router';
 
 export default function WelcomeLayout() {
-  return (
-    <Stack screenOptions={{ headerShown: false, animation: "fade" }}>
-      <Stack.Screen name="index" />
-      <Stack.Screen name="intro" />
-    </Stack>
-  );
+	return (
+		<Stack screenOptions={{ headerShown: false, animation: 'fade' }}>
+			<Stack.Screen name="index" />
+			<Stack.Screen name="intro" />
+		</Stack>
+	);
 }
