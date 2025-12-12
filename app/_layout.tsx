@@ -1,23 +1,73 @@
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { ActionSheetProvider } from "@expo/react-native-action-sheet";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   DarkTheme,
   DefaultTheme,
   ThemeProvider,
 } from "@react-navigation/native";
-import { Stack } from "expo-router";
+import { Stack, useRouter, useSegments } from "expo-router";
+import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
+import { useEffect, useState } from "react";
 import "react-native-reanimated";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import "./global.css";
 import "../i18n";
+import "./global.css";
 
-export const unstable_settings = {
-  initialRouteName: "(tabs)",
-};
+// 保持启动屏显示，直到我们完成状态检查和路由决定
+SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
+  const router = useRouter();
+  const segments = useSegments(); // 获取当前路由段，例如 ['', '(tabs)', 'home']
+
+  // 状态：应用是否准备就绪（即 AsyncStorage 读取完毕）
+  const [isReady, setIsReady] = useState(false);
+  // 状态：是否看过 intro
+  const [hasSeenIntro, setHasSeenIntro] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    async function checkOnboardingStatus() {
+      try {
+        const introValue = await AsyncStorage.getItem("hasSeenIntro");
+        // hasSeenIntro 为 true 表示看过 intro
+        setHasSeenIntro(introValue === "true");
+      } catch (e) {
+        console.error("AsyncStorage error:", e);
+        setHasSeenIntro(false);
+      } finally {
+        // 数据加载完毕，应用准备就绪
+        setIsReady(true);
+        // 隐藏启动屏
+        SplashScreen.hideAsync();
+      }
+    }
+    checkOnboardingStatus();
+  }, [segments]);
+
+  useEffect(() => {
+    if (!isReady) return; // 等待状态加载完毕
+
+    // 当前路由是否为欢迎页或 intro 页
+    const inWelcomePage = segments[0] === "welcome";
+    const inIntroPage = segments[0] === "(welcome)" && segments[1] === "intro";
+
+    // 情况 A: 如果没看完 intro，并且当前不在 welcome 也不在 intro 页面，则跳转到 welcome 重新开始
+    if (!hasSeenIntro && !inWelcomePage && !inIntroPage) {
+      router.replace("/welcome");
+    }
+    // 情况 B: 如果看完 intro，但当前还在 welcome 或 intro 页面，则跳转到主页
+    else if (hasSeenIntro && (inWelcomePage || inIntroPage)) {
+      router.replace("/(tabs)");
+    }
+    // 其他情况：路由正确，不做任何操作
+  }, [hasSeenIntro, isReady, router, segments]);
+
+  if (!isReady) {
+    return null;
+  }
 
   return (
     <SafeAreaProvider>
@@ -31,7 +81,15 @@ export default function RootLayout() {
               animation: "slide_from_right",
             }}
           >
-            <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="welcome" options={{ animation: "fade" }} />
+
+            <Stack.Screen name="(welcome)" options={{ animation: "fade" }} />
+
+            <Stack.Screen
+              name="(tabs)"
+              options={{ animation: "slide_from_right" }}
+            />
+
             <Stack.Screen
               name="(auth)"
               options={{ animation: "fade_from_bottom" }}

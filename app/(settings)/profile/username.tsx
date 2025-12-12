@@ -22,15 +22,14 @@ export default function UsernamePage() {
       <Stack.Screen options={{ headerShown: false }} />
       <TopTitle title={t("settings-profile-username-title")} showBack={true} />
       <View className="flex-1 bg-gray-100 dark:bg-black px-4 pt-6">
-        <Card variant="elevated" className="p-4 mb-4">
-          <View className="flex-row items-center mb-4">
-            <User size={18} color={colorScheme === "dark" ? "white" : "#666"} />
-            <Text className="text-lg font-semibold ml-2 text-gray-900 dark:text-white">
-              {t("settings-profile-username-change-title")}
-            </Text>
-          </View>
-
-          <View className="flex-col gap-4">
+        <Card
+          variant="elevated"
+          title={t("settings-profile-username-change-title")}
+          icon={<User size={18} />}
+          className="mb-4"
+        >
+          <View className="p-4">
+            <View className="flex-col gap-4">
             <View>
               <Text className="text-sm text-gray-500 dark:text-gray-400 mb-2">
                 {t("settings-profile-username-title")}
@@ -39,7 +38,7 @@ export default function UsernamePage() {
                 value={username}
                 onChangeText={setUsername}
                 className="border border-gray-300 dark:border-gray-600 rounded-lg p-3 text-base text-gray-900 dark:text-white bg-white dark:bg-gray-700"
-                placeholder="请输入用户名"
+                placeholder={t('settings-profile-username-placeholder')}
                 placeholderTextColor="#999"
               />
             </View>
@@ -47,8 +46,9 @@ export default function UsernamePage() {
               onPress={handleSave}
               className="bg-blue-500 rounded-lg p-3 items-center"
             >
-              <Text className="text-white text-base font-semibold">保存</Text>
+              <Text className="text-white text-base font-semibold">{t('save')}</Text>
             </TouchableOpacity>
+            </View>
           </View>
         </Card>
       </View>
