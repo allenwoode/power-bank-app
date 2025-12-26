@@ -15,7 +15,9 @@ cd ..
 # 移动和重命名 release APK
 for ABI in "${ABIS[@]}"; do
     SRC="android/app/build/outputs/apk/release/app-${ABI}-release.apk"
-    DEST="output/release/app-release-${VERSION}-${ABI}.apk"
+    DEST_DIR="output/release/${VERSION}"
+    DEST="${DEST_DIR}/app-release-${VERSION}-${ABI}.apk"
+    mkdir -p "$DEST_DIR"
     if [ -f "$SRC" ]; then
         mv "$SRC" "$DEST"
         echo "Moved $SRC to $DEST"
@@ -46,7 +48,9 @@ if [ "$BUILD_DEBUG" = true ]; then
     # 移动和重命名 debug APK
     for ABI in "${ABIS[@]}"; do
         SRC="android/app/build/outputs/apk/debug/app-${ABI}-debug.apk"
-        DEST="output/debug/app-debug-${VERSION}-${ABI}.apk"
+        DEST_DIR="output/debug/${VERSION}"
+        DEST="${DEST_DIR}/app-debug-${VERSION}-${ABI}.apk"
+        mkdir -p "$DEST_DIR"
         if [ -f "$SRC" ]; then
             mv "$SRC" "$DEST"
             echo "Moved $SRC to $DEST"
