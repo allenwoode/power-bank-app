@@ -125,7 +125,7 @@
 		"licenseType": "MIT",
 		"link": "git+https://github.com/expo/expo.git",
 		"remoteVersion": "18.0.12",
-		"installedVersion": "18.0.11",
+		"installedVersion": "18.0.12",
 		"definedVersion": "~18.0.10",
 		"author": "650 Industries, Inc."
 	},
@@ -138,7 +138,7 @@
 		"licenseType": "MIT",
 		"link": "git+https://github.com/expo/expo.git",
 		"remoteVersion": "14.0.10",
-		"installedVersion": "14.0.9",
+		"installedVersion": "14.0.10",
 		"definedVersion": "~14.0.9",
 		"author": "650 Industries, Inc."
 	},
