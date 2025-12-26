@@ -25,9 +25,19 @@ for ABI in "${ABIS[@]}"; do
 done
 
 # 询问是否构建 debug APK
-echo "Do you want to build debug APKs? (y/n)"
-read -r answer
-if [ "$answer" = "y" ] || [ "$answer" = "Y" ]; then
+if [ -z "$CI" ]; then
+    echo "Do you want to build debug APKs? (y/n)"
+    read -r answer
+    if [ "$answer" = "y" ] || [ "$answer" = "Y" ]; then
+        BUILD_DEBUG=true
+    else
+        BUILD_DEBUG=false
+    fi
+else
+    BUILD_DEBUG=false
+fi
+
+if [ "$BUILD_DEBUG" = true ]; then
     echo "Building debug APKs..."
     cd android
     ./gradlew assembleDebug

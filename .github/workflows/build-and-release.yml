@@ -1,0 +1,52 @@
+name: Release APKs
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'output/release/*.apk'
+  workflow_dispatch:
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Get version
+      id: version
+      run: |
+        VERSION=$(grep 'versionName' android/app/build.gradle | sed 's/.*versionName "\([^"]*\)".*/\1/')
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+    - name: Check if APKs exist
+      run: |
+        if [ ! -d "output/release" ] || [ -z "$(ls -A output/release/*.apk 2>/dev/null)" ]; then
+          echo "No APK files found in output/release/. Please build locally first."
+          exit 1
+        fi
+
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{ steps.version.outputs.version }}
+        release_name: Release v${{ steps.version.outputs.version }}
+        draft: false
+        prerelease: false
+
+    - name: Upload Release Assets
+      run: |
+        for apk in output/release/*.apk; do
+          if [ -f "$apk" ]; then
+            filename=$(basename "$apk")
+            gh release upload v${{ steps.version.outputs.version }} "$apk" --clobber
+          fi
+        done
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
