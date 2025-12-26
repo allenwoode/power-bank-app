@@ -1,6 +1,6 @@
 import Card from '@/components/ui/card';
 import TopTitle from '@/components/ui/top-title';
-import CustomAlert from '@/utils/my-alert';
+import CustomAlert from '@/components/ui/system-alert.tsx';
 import Constants from 'expo-constants';
 import { Stack } from 'expo-router';
 import { Info } from 'lucide-react-native';

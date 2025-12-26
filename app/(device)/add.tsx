@@ -1,16 +1,24 @@
 import DeviceActionButtons from '@/components/ui/device-action-buttons';
 import TopTitle from '@/components/ui/top-title';
+import BottomModal from '@/components/ui/bottom-modal';
 import BleService from '@/lib/ble-service';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter, Stack } from 'expo-router';
-import { Bluetooth, Check, Tv, Wifi, X, RefreshCw } from 'lucide-react-native';
+import {
+	Bluetooth,
+	Check,
+	Tv,
+	RefreshCw,
+	Signal,
+	SignalHigh,
+	SignalLow,
+	SearchX,
+} from 'lucide-react-native';
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
 	Animated,
 	FlatList,
-	KeyboardAvoidingView,
-	Modal,
 	PermissionsAndroid,
 	Platform,
 	Pressable,
@@ -23,7 +31,8 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import WifiManager from 'react-native-wifi-reborn';
-import CustomAlert from '@/utils/my-alert';
+import CustomAlert from '@/components/ui/system-alert.tsx';
+import { Buffer } from 'buffer';
 
 interface BluetoothDevice {
 	id: string;
@@ -32,14 +41,16 @@ interface BluetoothDevice {
 	manufacturerData?: string;
 }
 
+// --- 辅助函数 ---
 const deviceTypeCache = new Map<string, React.FC<any>>();
+
 const getRssiInfo = (rssi: number) => {
 	if (!rssi || rssi === 0 || rssi === -999)
-		return { color: '#6B7280', level: 0 };
-	if (rssi >= -50) return { color: '#10B981', level: 4 };
-	if (rssi >= -70) return { color: '#3B82F6', level: 3 };
-	if (rssi >= -85) return { color: '#F59E0B', level: 2 };
-	return { color: '#EF4444', level: 1 };
+		return { color: '#6B7280', level: 0, icon: SignalLow };
+	if (rssi >= -50) return { color: '#10B981', level: 4, icon: SignalHigh };
+	if (rssi >= -70) return { color: '#3B82F6', level: 3, icon: Signal };
+	if (rssi >= -85) return { color: '#F59E0B', level: 2, icon: Signal };
+	return { color: '#EF4444', level: 1, icon: SignalLow };
 };
 
 const getDeviceTypeIcon = (
@@ -49,13 +60,32 @@ const getDeviceTypeIcon = (
 ) => {
 	if (deviceId && deviceTypeCache.has(deviceId))
 		return deviceTypeCache.get(deviceId)!;
+
 	let type = Bluetooth;
-	if (
-		deviceName?.toLowerCase().includes('power') ||
-		deviceName?.toLowerCase().includes('bank')
-	) {
-		type = Tv;
+
+	if (manufacturerData) {
+		try {
+			const buf = Buffer.from(manufacturerData, 'base64');
+			if (buf.length >= 8 && buf[7] === 0x1f) {
+				type = Tv;
+			}
+		} catch (error) {
+			// ignore
+		}
 	}
+
+	if (type === Bluetooth && deviceName) {
+		const name = deviceName.toLowerCase();
+		if (
+			name.includes('power') ||
+			name.includes('bank') ||
+			name.includes('充电') ||
+			name.includes('宝')
+		) {
+			type = Tv;
+		}
+	}
+
 	if (deviceId) deviceTypeCache.set(deviceId, type);
 	return type;
 };
@@ -78,11 +108,9 @@ export default function AddDevicePage() {
 	);
 	const devicesMapRef = useRef<Map<string, BluetoothDevice>>(new Map());
 
-	// 提示弹窗
+	// 弹窗状态
 	const [alertVisible, setAlertVisible] = useState(false);
 	const [alertConfig, setAlertConfig] = useState<any>({});
-
-	// Wi-Fi 模态框
 	const [showWifiModal, setShowWifiModal] = useState(false);
 	const [isWifiScanning, setIsWifiScanning] = useState(false);
 	const [wifiList, setWifiList] = useState<string[]>([]);
@@ -104,7 +132,7 @@ export default function AddDevicePage() {
 		return true;
 	};
 
-	// 扫描
+	// 扫描逻辑
 	const startScanning = async () => {
 		try {
 			if (!(await checkPermissions()))
@@ -144,6 +172,7 @@ export default function AddDevicePage() {
 		setIsScanning(false);
 	};
 
+	// 连接逻辑
 	const handleMainConfirm = async () => {
 		if (selectedDevices.size === 0) {
 			showAlert(t('tip'), t('add-device-chose-device'));
@@ -155,14 +184,11 @@ export default function AddDevicePage() {
 		try {
 			await BleService.stopScan();
 			setIsScanning(false);
-
 			console.log(`[Page] 正在连接: ${deviceId}`);
 			await BleService.connectAndPrepare(deviceId);
-
 			console.log('[Page] 连接成功，请填写 Wi-Fi 信息');
 			loadWifiList();
 			setShowWifiModal(true);
-			// 注意：此时保持连接，等待用户输入密码
 		} catch (err: any) {
 			console.error(err);
 			await BleService.disconnect();
@@ -171,9 +197,9 @@ export default function AddDevicePage() {
 		}
 	};
 
+	// 发送配置
 	const submitWifiConfig = async () => {
 		setShowWifiModal(false);
-
 		const device = BleService.getConnectedDevice();
 		if (!device) {
 			setIsConnecting(false);
@@ -182,19 +208,12 @@ export default function AddDevicePage() {
 		}
 
 		try {
-			const cmdSSID = `SSID:${ssid}\r\n`; // 第一条：只发账号
-			const cmdPASS = `PASS:${password}\r\n`; // 第二条：只发密码
+			const cmdSSID = `SSID:${ssid}\r\n`;
+			const cmdPASS = `PASS:${password}\r\n`;
 
-			console.log(`[Page] 准备分步发送:`);
-			console.log(`       1. ${cmdSSID.trim()}`);
-			console.log(`       2. ${cmdPASS.trim()}`);
-
-			// 2. 获取服务
 			const services = await device.services();
 			let sentCount = 0;
 
-			// 3. 辅助函数：负责把一条长指令切碎并慢速发送
-			//    targetS: 服务UUID, targetC: 特征UUID, data: 完整字符串
 			const sendLongCommand = async (
 				targetS: string,
 				targetC: string,
@@ -203,36 +222,19 @@ export default function AddDevicePage() {
 				const MAX_CHUNK = 20;
 				for (let i = 0; i < data.length; i += MAX_CHUNK) {
 					const chunk = data.slice(i, i + MAX_CHUNK);
-					// 强制 WithoutResponse + 延时
 					await BleService.send(targetS, targetC, chunk, false);
-					await new Promise((r) => setTimeout(r, 100)); // 包与包之间停 100ms
+					await new Promise((r) => setTimeout(r, 100));
 				}
 			};
 
-			// 4. 遍历接口进行发送
 			for (const service of services) {
 				const characteristics = await service.characteristics();
-
 				for (const char of characteristics) {
-					// 只要是能写的
 					if (char.isWritableWithResponse || char.isWritableWithoutResponse) {
 						try {
-							console.log(
-								`[Page] >>> 正在向接口 ${char.uuid.slice(4, 8)} 发送...`
-							);
-
-							// --- 第一步：发送 SSID ---
 							await sendLongCommand(service.uuid, char.uuid, cmdSSID);
-							console.log(`       SSID 发送完毕`);
-
-							// --- 关键：中间休息 500ms ---
-							// 让设备有时间解析 SSID 并准备接收密码
 							await new Promise((r) => setTimeout(r, 500));
-
-							// --- 第二步：发送 密码 ---
 							await sendLongCommand(service.uuid, char.uuid, cmdPASS);
-							console.log(`       密码 发送完毕`);
-
 							sentCount++;
 						} catch (writeErr) {
 							console.warn(`[Page] 写入失败: ${writeErr}`);
@@ -241,13 +243,8 @@ export default function AddDevicePage() {
 				}
 			}
 
-			if (sentCount === 0) {
-				throw new Error('未找到任何可写入的接口');
-			}
+			if (sentCount === 0) throw new Error('未找到任何可写入的接口');
 
-			console.log(`[Page] 流程结束，指令已分两次发出`);
-
-			// 5. 保存并断开 (延时 2秒，给设备联网时间)
 			setTimeout(async () => {
 				const existing = await AsyncStorage.getItem('devices');
 				const list = existing ? JSON.parse(existing) : [];
@@ -283,9 +280,9 @@ export default function AddDevicePage() {
 			setIsConnecting(false);
 		}
 	};
-	// 其他辅助逻辑
+
+	// Wi-Fi 列表
 	const loadWifiList = async () => {
-		setWifiList([]);
 		if (Platform.OS === 'android') {
 			setIsWifiScanning(true);
 			try {
@@ -293,14 +290,16 @@ export default function AddDevicePage() {
 					PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
 				);
 				if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-					const list = await WifiManager.reScanAndLoadWifiList();
-					const ssids = Array.from(
-						new Set(list.map((w: any) => w.SSID).filter(Boolean))
-					);
-					setWifiList(ssids as string[]);
+					const result = await WifiManager.reScanAndLoadWifiList();
+					if (Array.isArray(result)) {
+						const ssids = result
+							.map((w: any) => w.SSID)
+							.filter((ssid) => ssid && ssid.length > 0);
+						setWifiList(Array.from(new Set(ssids)));
+					}
 				}
 			} catch (e) {
-				console.warn(e);
+				console.warn('[Wi-Fi] 异常:', e);
 			} finally {
 				setIsWifiScanning(false);
 			}
@@ -367,169 +366,234 @@ export default function AddDevicePage() {
 		}
 	}, [isScanning, opacityAnim, scaleAnim]);
 
+	useEffect(() => {
+		return () => {
+			(async () => {
+				await BleService.disconnect();
+			})();
+		};
+	}, []);
+
 	return (
 		<>
 			<Stack.Screen options={{ headerShown: false }} />
 			<TopTitle title={t('add-device-header-title')} showBack={true} />
 
-			{/* --- Wi-Fi 弹窗 --- */}
-			<Modal
+			<BottomModal
 				visible={showWifiModal}
-				transparent={true}
-				animationType="slide"
-				onRequestClose={cancelWifiConfig}
+				onClose={cancelWifiConfig}
+				title={t('add-device-choose-wifi')}
 			>
-				<View className="flex-1 justify-end bg-black/50">
-					<KeyboardAvoidingView
-						behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-					>
-						<View className="rounded-t-3xl bg-white p-6 pb-10 dark:bg-gray-900">
-							<View className="mb-4 flex-row items-center justify-between">
-								<View className="flex-row items-center gap-2">
-									<Wifi size={24} className="text-blue-600" />
-									<Text className="text-xl font-bold text-gray-900 dark:text-white">
-										{t('choose-wifi')}
-									</Text>
-								</View>
-								<TouchableOpacity onPress={cancelWifiConfig} className="p-2">
-									<X size={24} className="text-gray-400" />
-								</TouchableOpacity>
-							</View>
-
-							<View className="mb-4">
-								<View className="mb-2 flex-row items-center justify-between">
-									<Text className="text-sm font-semibold text-gray-500">
-										AVAILABLE NETWORKS
-									</Text>
-									{isWifiScanning ? (
-										<ActivityIndicator size="small" color="#3B82F6" />
-									) : (
-										<TouchableOpacity onPress={loadWifiList}>
-											<RefreshCw size={14} className="text-blue-500" />
-										</TouchableOpacity>
-									)}
-								</View>
-								<View className="h-40 overflow-hidden rounded-xl border border-gray-100 bg-gray-50 dark:border-gray-800 dark:bg-gray-800/50">
-									<ScrollView
-										nestedScrollEnabled
-										keyboardShouldPersistTaps="handled"
-									>
-										{wifiList.map((item, idx) => (
-											<TouchableOpacity
-												key={idx}
-												onPress={() => setSsid(item)}
-												className={`flex-row items-center justify-between border-b border-gray-100 p-3 ${ssid === item ? 'bg-blue-100/50 dark:bg-blue-900/20' : ''}`}
-											>
-												<Text className="text-sm text-gray-800 dark:text-gray-200">
-													{item}
-												</Text>
-												{ssid === item && <Check size={16} color="#2563EB" />}
-											</TouchableOpacity>
-										))}
-									</ScrollView>
-								</View>
-							</View>
-
-							<TextInput
-								value={ssid}
-								onChangeText={setSsid}
-								placeholder="SSID"
-								className="mb-4 rounded-xl border border-gray-200 bg-white p-3 text-base dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-							/>
-							<TextInput
-								value={password}
-								onChangeText={setPassword}
-								placeholder="Password"
-								secureTextEntry
-								className="mb-6 rounded-xl border border-gray-200 bg-white p-3 text-base dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-							/>
-
-							<TouchableOpacity
-								onPress={submitWifiConfig}
-								disabled={!ssid}
-								className={`items-center rounded-xl p-4 ${ssid ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-700'}`}
-							>
-								<Text className="font-bold text-white">Send Configuration</Text>
+				<View className="mb-4">
+					<View className="mb-2 flex-row items-center justify-between">
+						<Text className="text-sm font-semibold text-gray-500">
+							{t('add-device-choose-wifi-ssid-list')}
+						</Text>
+						{isWifiScanning ? (
+							<ActivityIndicator size={14} color="#3B82F6" />
+						) : (
+							<TouchableOpacity onPress={loadWifiList}>
+								<RefreshCw size={14} color="#3B82F6" />
 							</TouchableOpacity>
-						</View>
-					</KeyboardAvoidingView>
-				</View>
-			</Modal>
-
-			{/* --- 主界面 --- */}
-			<View className="flex-1 bg-gray-100 py-4 dark:bg-black">
-				<View
-					className="items-center justify-center"
-					style={{ marginTop: insets.top, height: 280 }}
-				>
-					<Animated.View
-						style={{ transform: [{ scale: scaleAnim }], opacity: opacityAnim }}
-						className="absolute h-[200px] w-[200px] rounded-full bg-yellow-400"
-					/>
-					<View className="h-40 w-40 items-center justify-center rounded-full bg-yellow-300 dark:bg-yellow-400">
-						<Bluetooth size={60} color="white" strokeWidth={1.5} />
+						)}
+					</View>
+					<View className="h-40 overflow-hidden rounded-xl border border-gray-100 bg-gray-50 dark:border-gray-800 dark:bg-gray-800/50">
+						<ScrollView nestedScrollEnabled={true}>
+							{wifiList.map((item, idx) => (
+								<TouchableOpacity
+									key={idx}
+									onPress={() => setSsid(item)}
+									className={`flex-row items-center justify-between p-3 ${
+										idx < wifiList.length - 1
+											? 'border-b border-gray-100 dark:border-gray-700'
+											: ''
+									} ${
+										ssid === item ? 'bg-blue-100/50 dark:bg-blue-900/20' : ''
+									}`}
+								>
+									<Text className="text-sm text-gray-800 dark:text-gray-200">
+										{item}
+									</Text>
+									{ssid === item && <Check size={16} color="#2563EB" />}
+								</TouchableOpacity>
+							))}
+						</ScrollView>
 					</View>
 				</View>
-				<View className="flex-1">
-					<Text className="mb-2 px-4 text-center text-2xl font-bold text-black dark:text-white">
+				<TextInput
+					value={ssid}
+					onChangeText={setSsid}
+					placeholder={t('add-device-choose-wifi-ssid-placeholder')}
+					className="mb-4 rounded-xl border border-gray-200 bg-white p-3 text-base dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+				/>
+				<TextInput
+					value={password}
+					onChangeText={setPassword}
+					placeholder={t('add-device-choose-wifi-password-placeholder')}
+					secureTextEntry
+					className="mb-6 rounded-xl border border-gray-200 bg-white p-3 text-base dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+				/>
+				<TouchableOpacity
+					onPress={submitWifiConfig}
+					disabled={!ssid}
+					className={`items-center rounded-xl p-4 ${
+						ssid ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-700'
+					}`}
+				>
+					<Text className="font-bold text-white">
+						{t('add-device-choose-wifi-submit')}
+					</Text>
+				</TouchableOpacity>
+				{Platform.OS === 'ios' && <View style={{ height: 20 }} />}
+			</BottomModal>
+
+			{/* --- 页面主体：上下分层布局 --- */}
+			<View className="flex-1 bg-gray-50 dark:bg-black">
+				{/* 1. 顶部固定区域：扫描动画 + 提示文字 */}
+				<View
+					className="items-center justify-center pb-4"
+					style={{ marginTop: insets.top, zIndex: 1 }}
+				>
+					<View className="h-[200px] w-full items-center justify-center">
+						<Animated.View
+							style={{
+								transform: [{ scale: scaleAnim }],
+								opacity: opacityAnim,
+								width: 200,
+								height: 200,
+								borderRadius: 100,
+								backgroundColor: '#FBBF24',
+								position: 'absolute',
+							}}
+						/>
+						<View className="h-40 w-40 items-center justify-center rounded-full bg-yellow-300 shadow-sm dark:bg-yellow-400">
+							<Bluetooth size={60} color="white" strokeWidth={1.5} />
+						</View>
+					</View>
+					<Text className="mb-1 px-4 text-center text-2xl font-bold text-black dark:text-white">
 						{isScanning
 							? t('add-device-scan-loading')
 							: t('add-device-readying-scan')}
 					</Text>
-					<FlatList
-						data={devices}
-						keyExtractor={(item) => item.id}
-						numColumns={2}
-						columnWrapperStyle={{
-							justifyContent: 'space-between',
-							marginBottom: 12,
-							gap: 12,
-						}}
-						className="px-4"
-						renderItem={({ item }) => {
-							const rssi = getRssiInfo(item.rssi);
-							const Icon = getDeviceTypeIcon(
-								item.manufacturerData,
-								item.name,
-								item.id
-							);
-							const isSelected = selectedDevices.has(item.id);
-							return (
-								<Pressable
-									onPress={() => {
-										const set = new Set(selectedDevices);
-										set.has(item.id)
-											? set.delete(item.id)
-											: (set.clear(), set.add(item.id));
-										setSelectedDevices(set);
-									}}
-									className={`w-[48%] overflow-hidden rounded-2xl border-2 p-[14px] ${isSelected ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30' : 'border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900'}`}
-								>
-									<View className="mb-3 flex-row items-center justify-between">
-										<View
-											className={`h-7 w-7 items-center justify-center rounded-full border-2 ${isSelected ? 'border-blue-500 bg-blue-500' : 'border-gray-300 dark:border-gray-600'}`}
-										>
-											{isSelected && (
-												<Check size={16} color="white" strokeWidth={3} />
-											)}
-										</View>
-										<View
-											className="h-10 w-10 items-center justify-center rounded-lg"
-											style={{ backgroundColor: `${rssi.color}20` }}
-										>
-											<Icon size={20} color={rssi.color} strokeWidth={2} />
-										</View>
-									</View>
-									<Text
-										className="mb-2 text-sm font-semibold text-black dark:text-white"
-										numberOfLines={1}
+					<Text className="px-8 text-center text-base text-gray-500 dark:text-gray-400">
+						{isScanning
+							? t('add-device-scan-loading-hint')
+							: t('add-device-readying-scan-hint')}
+					</Text>
+				</View>
+
+				{/* 2. 底部滚动区域：设备列表 */}
+				<View className="w-full flex-1 bg-gray-50 dark:bg-black">
+					{/* 2.1 空状态处理 */}
+					{!isScanning && devices.length === 0 ? (
+						<View className="flex-1 items-center justify-center pb-20 opacity-50">
+							<SearchX size={48} color="#9CA3AF" />
+							<Text className="mt-4 text-gray-500">
+								{t('add-device-no-devices-found') || '暂无发现设备'}
+							</Text>
+						</View>
+					) : (
+						/* 2.2 列表渲染 */
+						<FlatList
+							data={devices}
+							keyExtractor={(item) => item.id}
+							numColumns={2}
+							columnWrapperStyle={{
+								justifyContent: 'space-between',
+								gap: 12, // 列间距
+							}}
+							contentContainerStyle={{
+								paddingHorizontal: 16,
+								paddingTop: 8,
+								paddingBottom: 150,
+							}}
+							showsVerticalScrollIndicator={false}
+							renderItem={({ item }) => {
+								const rssiInfo = getRssiInfo(item.rssi);
+								const Icon = getDeviceTypeIcon(
+									item.manufacturerData,
+									item.name,
+									item.id
+								);
+								const isSelected = selectedDevices.has(item.id);
+
+								return (
+									<Pressable
+										onPress={() => {
+											const set = new Set(selectedDevices);
+											// eslint-disable-next-line no-unused-expressions
+											set.has(item.id)
+												? set.delete(item.id)
+												: (set.clear(), set.add(item.id));
+											setSelectedDevices(set);
+										}}
+										className={`mb-3 overflow-hidden rounded-2xl border-2 p-4 shadow-sm ${
+											isSelected
+												? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30'
+												: 'border-gray-100 bg-white dark:border-gray-800 dark:bg-gray-900'
+										}`}
+										style={{ width: '48%' }}
 									>
-										{item.name}
-									</Text>
-								</Pressable>
-							);
-						}}
-					/>
+										<View className="mb-4 flex-row items-start justify-between">
+											<View
+												className={`h-10 w-10 items-center justify-center rounded-xl ${
+													isSelected
+														? 'bg-blue-500'
+														: 'bg-gray-100 dark:bg-gray-800'
+												}`}
+												style={
+													!isSelected
+														? {
+																backgroundColor: `${rssiInfo.color}15`,
+															}
+														: {}
+												}
+											>
+												{isSelected ? (
+													<Check size={20} color="white" strokeWidth={3} />
+												) : (
+													<Icon size={22} color={rssiInfo.color} />
+												)}
+											</View>
+											<View className="flex-row items-end gap-[2px]">
+												{Array.from({ length: 4 }).map((_, idx) => (
+													<View
+														key={idx}
+														className={`w-[3px] rounded-full ${
+															idx < rssiInfo.level
+																? ''
+																: 'bg-gray-200 dark:bg-gray-700'
+														}`}
+														style={{
+															height: 4 + idx * 3,
+															backgroundColor:
+																idx < rssiInfo.level
+																	? rssiInfo.color
+																	: undefined,
+														}}
+													/>
+												))}
+											</View>
+										</View>
+										<View>
+											<Text
+												className="text-base font-bold text-gray-900 dark:text-white"
+												numberOfLines={1}
+											>
+												{item.name}
+											</Text>
+											<Text
+												className="mt-1 text-xs font-medium text-gray-500"
+												numberOfLines={1}
+											>
+												RSSI: {item.rssi} dBm
+											</Text>
+										</View>
+									</Pressable>
+								);
+							}}
+						/>
+					)}
 				</View>
 			</View>
 
@@ -539,6 +603,7 @@ export default function AddDevicePage() {
 				onCancel={() => setAlertVisible(false)}
 			/>
 
+			{/* 底部按钮 (Absolute 悬浮) */}
 			<DeviceActionButtons
 				primaryButton={{
 					label: isScanning
@@ -549,13 +614,14 @@ export default function AddDevicePage() {
 				}}
 				secondaryButton={{
 					label: isConnecting
-						? 'Processing...'
+						? t('add-device-action-connecting')
 						: t('add-device-action-confirm'),
 					backgroundColor: isConnecting
 						? 'bg-gray-400'
 						: 'bg-green-500 dark:bg-green-600',
 					onPress: handleMainConfirm,
 				}}
+				showPrimary={!isConnecting}
 				showSecondary={selectedDevices.size > 0}
 			/>
 		</>

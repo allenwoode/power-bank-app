@@ -1,7 +1,7 @@
 import Card from '@/components/ui/card';
 import TopTitle from '@/components/ui/top-title';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import CustomAlert from '@/utils/my-alert';
+import CustomAlert from '@/components/ui/system-alert.tsx';
 import { Stack } from 'expo-router';
 import { Monitor, Smartphone, Tablet, Trash2 } from 'lucide-react-native';
 import { useState } from 'react';
