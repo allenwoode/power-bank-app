@@ -1,3 +1,4 @@
+import { NotificationProvider } from '@/context/notification-context';
 import { OnboardingContext } from '@/context/onboarding-context';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { ActionSheetProvider } from '@expo/react-native-action-sheet';
@@ -67,37 +68,39 @@ export default function RootLayout() {
 			<OnboardingContext.Provider
 				value={{ hasSeenIntro, setHasSeenIntro: (val) => setHasSeenIntro(val) }}
 			>
-				<SafeAreaProvider>
-					<ActionSheetProvider>
-						<ThemeProvider
-							value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}
-						>
-							<Stack
-								screenOptions={{
-									headerShown: false,
-									animation: 'slide_from_right',
-								}}
+				<NotificationProvider>
+					<SafeAreaProvider>
+						<ActionSheetProvider>
+							<ThemeProvider
+								value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}
 							>
-								<Stack.Screen
-									name="(welcome)"
-									options={{ animation: 'fade' }}
-								/>
+								<Stack
+									screenOptions={{
+										headerShown: false,
+										animation: 'slide_from_right',
+									}}
+								>
+									<Stack.Screen
+										name="(welcome)"
+										options={{ animation: 'fade' }}
+									/>
 
-								<Stack.Screen
-									name="(tabs)"
-									options={{ animation: 'slide_from_right' }}
-								/>
+									<Stack.Screen
+										name="(tabs)"
+										options={{ animation: 'slide_from_right' }}
+									/>
 
-								<Stack.Screen
-									name="(auth)"
-									options={{ animation: 'fade_from_bottom' }}
-								/>
-							</Stack>
+									<Stack.Screen
+										name="(auth)"
+										options={{ animation: 'fade_from_bottom' }}
+									/>
+								</Stack>
 
-							<StatusBar style="auto" />
-						</ThemeProvider>
-					</ActionSheetProvider>
-				</SafeAreaProvider>
+								<StatusBar style="auto" />
+							</ThemeProvider>
+						</ActionSheetProvider>
+					</SafeAreaProvider>
+				</NotificationProvider>
 			</OnboardingContext.Provider>
 		</GestureHandlerRootView>
 	);
