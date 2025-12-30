@@ -34,7 +34,6 @@ export default function TopTitle({
 	const [isMenuVisible, setIsMenuVisible] = useState(false);
 	const fadeAnim = useRef(new Animated.Value(0)).current;
 
-	// 控制返回按钮和更多按钮的动画值
 	const backPressAnim = useRef(new Animated.Value(0)).current;
 	const morePressAnim = useRef(new Animated.Value(0)).current;
 

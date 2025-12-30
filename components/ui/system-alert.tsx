@@ -1,15 +1,21 @@
-// components/CustomAlert.tsx
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { AlertCircle } from 'lucide-react-native';
-import React from 'react';
-import { Modal, Pressable, Text, View } from 'react-native';
-import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
+import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import {
+	Modal,
+	Pressable,
+	Animated as RNAnimated,
+	Text,
+	View,
+} from 'react-native';
+import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 
 type CustomAlertProps = {
 	visible: boolean;
 	title: string;
-	message: string;
+	message: string | React.ReactNode;
+	tip?: string | React.ReactNode;
 	icon?: React.ReactNode;
 	primaryColor?: string;
 	confirmText?: string;
@@ -23,6 +29,7 @@ export default function CustomAlert({
 	visible,
 	title,
 	message,
+	tip,
 	icon,
 	primaryColor = '#007AFF',
 	confirmText,
@@ -39,6 +46,24 @@ export default function CustomAlert({
 		<AlertCircle size={20} color={colorScheme === 'dark' ? 'white' : '#666'} />
 	);
 	const displayIcon = icon || defaultIcon;
+
+	const cancelPressAnim = useRef(new RNAnimated.Value(0)).current;
+	const confirmPressAnim = useRef(new RNAnimated.Value(0)).current;
+
+	const animatePress = (anim: RNAnimated.Value, toValue: number) => {
+		RNAnimated.timing(anim, {
+			toValue,
+			duration: 100,
+			useNativeDriver: true,
+		}).start();
+	};
+
+	useEffect(() => {
+		if (visible) {
+			cancelPressAnim.setValue(0);
+			confirmPressAnim.setValue(0);
+		}
+	}, [visible, cancelPressAnim, confirmPressAnim]);
 	return (
 		<Modal transparent visible={visible} animationType="fade">
 			<View
@@ -66,9 +91,24 @@ export default function CustomAlert({
 
 					{/* 中 - 内容区域 */}
 					<View className="p-6">
-						<Text className="text-lg leading-6 text-gray-600 dark:text-gray-400">
-							{message}
-						</Text>
+						{typeof message === 'string' ? (
+							<Text className="text-lg leading-6 text-gray-600 dark:text-gray-400">
+								{message}
+							</Text>
+						) : (
+							message
+						)}
+						{tip && (
+							<View className="mt-2">
+								{typeof tip === 'string' ? (
+									<Text className="text-sm text-gray-500 dark:text-gray-500">
+										{tip}
+									</Text>
+								) : (
+									tip
+								)}
+							</View>
+						)}
 					</View>
 
 					{/* 下 - 按钮区域 */}
@@ -81,13 +121,20 @@ export default function CustomAlert({
 						{showCancel && (
 							<Pressable
 								onPress={onCancel}
-								className="flex-1 items-center py-3"
+								onPressIn={() => animatePress(cancelPressAnim, 1)}
+								onPressOut={() => animatePress(cancelPressAnim, 0)}
+								className="relative flex-1 items-center py-3"
 								style={{
 									borderRightWidth: 1,
 									borderRightColor:
 										colorScheme === 'dark' ? '#374151' : '#E5E7EB',
 								}}
+								android_ripple={{ color: 'rgba(0, 0, 0, 0.1)' }}
 							>
+								<RNAnimated.View
+									className="absolute inset-0 bg-black/5 dark:bg-white/5"
+									style={{ opacity: cancelPressAnim }}
+								/>
 								<Text className="text-lg font-medium text-gray-600 dark:text-gray-300">
 									{cancelTextValue}
 								</Text>
@@ -95,9 +142,16 @@ export default function CustomAlert({
 						)}
 						<Pressable
 							onPress={onConfirm}
-							className="flex-1 items-center py-3"
+							onPressIn={() => animatePress(confirmPressAnim, 1)}
+							onPressOut={() => animatePress(confirmPressAnim, 0)}
+							className="relative flex-1 items-center py-3"
 							style={{ backgroundColor: primaryColor + '10' }}
+							android_ripple={{ color: 'rgba(0, 0, 0, 0.1)' }}
 						>
+							<RNAnimated.View
+								className="absolute inset-0 bg-black/5 dark:bg-white/5"
+								style={{ opacity: confirmPressAnim }}
+							/>
 							<Text
 								className="text-lg font-semibold"
 								style={{ color: primaryColor }}
