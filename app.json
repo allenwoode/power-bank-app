@@ -2,7 +2,7 @@
 	"expo": {
 		"name": "Power Bank",
 		"slug": "powerbank",
-		"version": "1.0.10",
+		"version": "1.0.12",
 		"orientation": "portrait",
 		"icon": "./assets/images/icon.png",
 		"scheme": "powerbank",
@@ -17,7 +17,7 @@
 				"NSBluetoothPeripheralUsageDescription": "我们需要使用蓝牙连接周边的充电宝设备。",
 				"NSLocationWhenInUseUsageDescription": "我们需要位置权限来辅助搜索附近的蓝牙设备。"
 			},
-			"buildNumber": "7"
+			"buildNumber": "9"
 		},
 		"android": {
 			"package": "cn.xixiu.powerbank",
@@ -41,7 +41,7 @@
 			},
 			"edgeToEdgeEnabled": true,
 			"predictiveBackGestureEnabled": false,
-			"versionCode": 7
+			"versionCode": 9
 		},
 		"plugins": [
 			"expo-router",
