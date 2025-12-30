@@ -1,6 +1,6 @@
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useRouter } from 'expo-router';
-import { ArrowLeft, Ellipsis } from 'lucide-react-native';
+import { ArrowLeft, EllipsisVertical } from 'lucide-react-native';
 import React, { useEffect, useRef, useState } from 'react';
 import { Animated, Pressable, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -71,6 +71,8 @@ export default function TopTitle({
 		onPress();
 	};
 
+	const overlayOpacity = colorScheme === 'dark' ? 0.4 : 0.2;
+
 	return (
 		<>
 			{isMenuVisible && (
@@ -79,7 +81,7 @@ export default function TopTitle({
 					style={{
 						opacity: fadeAnim.interpolate({
 							inputRange: [0, 1],
-							outputRange: [0, 0.2],
+							outputRange: [0, overlayOpacity],
 						}),
 					}}
 					pointerEvents="auto"
@@ -113,7 +115,6 @@ export default function TopTitle({
 						>
 							{({ pressed }) => (
 								<>
-									{/* 菜单项点击过渡 */}
 									{pressed && (
 										<View className="absolute inset-0 bg-black/5 dark:bg-white/5" />
 									)}
@@ -200,7 +201,7 @@ export default function TopTitle({
 									transform: [{ scale: 1 }],
 								}}
 							/>
-							<Ellipsis
+							<EllipsisVertical
 								size={24}
 								color={colorScheme === 'dark' ? 'white' : 'black'}
 							/>
