@@ -55,7 +55,9 @@ export default function AboutPage() {
 									{t('settings-app-setting-about-copyright')}
 								</Text>
 								<Text className="text-base text-gray-900 dark:text-white">
-									{t('settings-app-setting-about-copyright-value')}
+									{t('settings-app-setting-about-copyright-value', {
+										year: new Date().getFullYear(),
+									})}
 								</Text>
 							</View>
 

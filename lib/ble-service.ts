@@ -105,19 +105,19 @@ class BleService {
 	 */
 	async connectAndPrepare(deviceId: string): Promise<Device> {
 		try {
-			// 1. 先尝试断开，但要给 Native 留出 500ms 释放资源
+			// 先尝试断开，但要给 Native 留出 500ms 释放资源
 			await this.manager.cancelDeviceConnection(deviceId).catch(() => {});
 			await new Promise((resolve) => setTimeout(resolve, 500));
 
 			console.log(`[BleLib] 发起 Native 连接请求: ${deviceId}`);
 
-			// 2. 连接设备，禁用 autoConnect 提高受控度
+			// 连接设备，禁用 autoConnect 提高受控度
 			const device = await this.manager.connectToDevice(deviceId, {
 				autoConnect: false,
 				timeout: 15000,
 			});
 
-			// 3. 发现服务和特征（连接不稳定时会在这里崩掉）
+			// 发现服务和特征（连接不稳定时会在这里崩掉）
 			await device.discoverAllServicesAndCharacteristics();
 
 			// Android 下提升 MTU，失败也不影响主流程
@@ -149,9 +149,14 @@ class BleService {
 				}
 			}
 
-			// 只有明确的用户主动取消操作才抛出 OPERATION_CANCELLED
-			// 注意：我们在连接前调用 cancelDeviceConnection 可能会导致一些 'cancelled' 错误，
-			// 但这些不是用户主动取消，应该归类为连接失败
+			/**
+			 * 只有明确的用户主动取消操作才抛出 OPERATION_CANCELLED
+			 * 注意：我们在连接前调用 cancelDeviceConnection 可能会导致一些 'cancelled' 错误，
+			 * 但这些不是用户主动取消，应该归类为连接失败
+			 *  example message:
+			 *   - "Connection attempt cancelled"
+			 *   - "Connection to device was cancelled"
+			 */
 			if (
 				message.includes('operation was cancelled') &&
 				message.includes('user')
@@ -207,7 +212,6 @@ class BleService {
 		const buffer =
 			typeof data === 'string' ? Buffer.from(data) : Buffer.from(data);
 
-		// 2. 打印日志：这步最关键！看看发出去的 Hex 对不对
 		console.log(`[BleLib] 发送数据到 ${charUUID.slice(0, 8)}...`);
 		console.log(`[BleLib] 内容 (Hex): ${buffer.toString('hex').toUpperCase()}`);
 		console.log(
