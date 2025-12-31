@@ -24,7 +24,7 @@ interface RightActionBtnProps {
 	onPress: () => void;
 	icon: React.ReactNode;
 	backgroundColor: string;
-	index: number; // 用于处理多个按钮的动画延迟或偏移（可选）
+	index: number;
 }
 
 function ActionButton({
@@ -232,6 +232,7 @@ export default function NotificationsPage() {
 											className="mb-3 overflow-hidden rounded-lg"
 										>
 											<ReanimatedSwipeable
+												key={`${item.id}-${item.read}`}
 												friction={2}
 												rightThreshold={40}
 												renderRightActions={(prog) => (
