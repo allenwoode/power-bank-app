@@ -321,6 +321,7 @@ export default function AddDevicePage() {
 	// 发送配置
 	const submitWifiConfig = async () => {
 		setShowWifiModal(false);
+		setIsConnecting(true); // 保持连接状态
 		const device = BleService.getConnectedDevice();
 		if (!device) {
 			setIsConnecting(false);
@@ -396,6 +397,7 @@ export default function AddDevicePage() {
 					t('add-device-add-success', { deviceName: device.name || device.id }),
 					'#10B981',
 					async () => {
+						setIsConnecting(false);
 						await BleService.disconnect();
 						router.back();
 					}
@@ -620,21 +622,18 @@ export default function AddDevicePage() {
 			// 蓝色向内汇聚动画
 			const connectAnim = Animated.loop(
 				Animated.parallel([
-					// 1. 缩放动画：从外围 2.5 倍迅速缩小到 1 倍中心点
 					Animated.timing(connectScaleAnim, {
-						toValue: 0.8, // 稍微缩得比中心圆圈小一点，产生“没入”感
+						toValue: 0.8,
 						duration: 1500,
-						useNativeDriver: true, // 使用原生驱动更丝滑
+						useNativeDriver: true,
 					}),
-					// 2. 透明度动画：在缩小的过程中，先显现后消失
+
 					Animated.sequence([
-						// 刚开始从外围出现
 						Animated.timing(connectOpacityAnim, {
 							toValue: 0.4,
 							duration: 400,
 							useNativeDriver: true,
 						}),
-						// 靠近中心时变淡，模拟“吸收”进去的感觉
 						Animated.timing(connectOpacityAnim, {
 							toValue: 0,
 							duration: 1100,
@@ -676,13 +675,13 @@ export default function AddDevicePage() {
 		return () => {
 			(async () => {
 				console.log('[Page] 页面退出，执行清理');
-				// 1. 如果有记录的正在连接的 ID，先 cancel
+				// 如果有记录的正在连接的 ID，先 cancel
 				if (connectingDeviceIdRef.current) {
 					await BleService.manager
 						.cancelDeviceConnection(connectingDeviceIdRef.current)
 						.catch(() => {});
 				}
-				// 2. 执行 Service 全局清理
+				// 执行 Service 全局清理
 				await BleService.forceCleanup();
 			})();
 		};
