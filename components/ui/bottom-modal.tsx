@@ -1,141 +1,110 @@
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import { X } from 'lucide-react-native';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect } from 'react';
 import {
-	Animated,
-	Dimensions,
-	Easing,
 	Keyboard,
-	Modal,
+	KeyboardEvent,
 	Platform,
 	Pressable,
 	Text,
 	TouchableOpacity,
-	TouchableWithoutFeedback,
 	View,
 } from 'react-native';
-
-interface BottomModalProps {
-	visible: boolean;
-	onClose: () => void;
-	title?: string;
-	children: React.ReactNode;
-	showCloseButton?: boolean;
-}
-
-const { height: SCREEN_HEIGHT } = Dimensions.get('window');
+import Animated, {
+	Easing,
+	FadeIn,
+	FadeOut,
+	SlideInDown,
+	SlideOutDown,
+	useAnimatedStyle,
+	useSharedValue,
+	withTiming,
+} from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function BottomModal({
 	visible,
 	onClose,
 	title,
 	children,
-	showCloseButton = true,
-}: BottomModalProps) {
-	const [keyboardHeight, setKeyboardHeight] = useState(0);
-	const [showModal, setShowModal] = useState(visible);
-	const animValue = useRef(new Animated.Value(0)).current;
+}: {
+	visible: boolean;
+	onClose: () => void;
+	title?: string;
+	children: React.ReactNode;
+}) {
+	const colorScheme = useColorScheme();
+	const iconColor = colorScheme === 'dark' ? '#D1D5DB' : '#374151';
+	const insets = useSafeAreaInsets();
+	const keyboardHeight = useSharedValue(0);
 
 	useEffect(() => {
-		if (visible) {
-			setShowModal(true);
-			Animated.timing(animValue, {
-				toValue: 1,
-				duration: 500,
-				useNativeDriver: true,
-				easing: Easing.out(Easing.cubic),
-			}).start();
-		} else {
-			Animated.timing(animValue, {
-				toValue: 0,
-				duration: 400,
-				useNativeDriver: true,
-				easing: Easing.in(Easing.cubic),
-			}).start(() => {
-				setShowModal(false);
-			});
-		}
-	}, [visible, animValue]);
-
-	useEffect(() => {
-		const showListener = Keyboard.addListener(
+		const showSubscription = Keyboard.addListener(
 			Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
-			(e) => setKeyboardHeight(e.endCoordinates.height)
+			(e: KeyboardEvent) => {
+				keyboardHeight.value = withTiming(e.endCoordinates.height, {
+					duration: Platform.OS === 'ios' ? 250 : 200,
+				});
+			}
 		);
-		const hideListener = Keyboard.addListener(
+
+		const hideSubscription = Keyboard.addListener(
 			Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
-			() => setKeyboardHeight(0)
+			() => {
+				keyboardHeight.value = withTiming(0, {
+					duration: Platform.OS === 'ios' ? 250 : 200,
+				});
+			}
 		);
+
 		return () => {
-			showListener.remove();
-			hideListener.remove();
+			showSubscription.remove();
+			hideSubscription.remove();
 		};
-	}, []);
+	}, [keyboardHeight]);
 
-	const backdropOpacity = animValue.interpolate({
-		inputRange: [0, 1],
-		outputRange: [0, 0.5],
-	});
+	const animatedStyle = useAnimatedStyle(() => ({
+		transform: [{ translateY: -keyboardHeight.value }],
+	}));
 
-	const slideY = animValue.interpolate({
-		inputRange: [0, 1],
-		outputRange: [SCREEN_HEIGHT, 0],
-	});
+	if (!visible) return null;
 
 	return (
-		<Modal
-			visible={showModal}
-			transparent={true}
-			animationType="none"
-			onRequestClose={onClose}
-		>
+		<View className="absolute inset-0" pointerEvents="box-none">
 			<Animated.View
-				style={{
-					position: 'absolute',
-					top: 0,
-					bottom: 0,
-					left: 0,
-					right: 0,
-					backgroundColor: 'black',
-					opacity: backdropOpacity,
-				}}
+				className="absolute inset-0 bg-black/40"
+				style={{ zIndex: 55 }}
+				entering={FadeIn.duration(200)}
+				exiting={FadeOut.duration(150)}
 			>
-				<Pressable style={{ flex: 1 }} onPress={onClose} />
+				<Pressable className="flex-1" onPress={onClose} />
 			</Animated.View>
 
-			<View
-				style={{
-					flex: 1,
-					justifyContent: 'flex-end',
-					paddingBottom: keyboardHeight,
-				}}
-				pointerEvents="box-none"
+			<Animated.View
+				className="absolute bottom-0 left-0 right-0"
+				style={[{ zIndex: 60 }, animatedStyle]}
+				entering={SlideInDown.easing(Easing.out(Easing.quad))}
+				exiting={SlideOutDown.easing(Easing.in(Easing.quad))}
 			>
-				<Animated.View
+				<View
+					className="rounded-t-3xl bg-white px-6 py-4 dark:bg-gray-900"
 					style={{
-						transform: [{ translateY: slideY }],
+						paddingBottom: Math.max(insets.bottom, 16),
 					}}
 				>
-					<Pressable onPress={() => {}}>
-						<TouchableWithoutFeedback>
-							<View className="w-full rounded-t-3xl bg-white p-6 pb-8 shadow-2xl dark:bg-gray-900">
-								{title && (
-									<View className="mb-4 flex-row items-center justify-between">
-										<Text className="text-xl font-bold text-gray-900 dark:text-white">
-											{title}
-										</Text>
-										{showCloseButton && (
-											<TouchableOpacity onPress={onClose} className="p-2">
-												<X size={24} color="#9CA3AF" />
-											</TouchableOpacity>
-										)}
-									</View>
-								)}
-								{children}
-							</View>
-						</TouchableWithoutFeedback>
-					</Pressable>
-				</Animated.View>
-			</View>
-		</Modal>
+					{title && (
+						<View className="mb-4 mt-1 flex-row items-center justify-between">
+							<Text className="text-xl font-semibold text-gray-900 dark:text-white">
+								{title}
+							</Text>
+							<TouchableOpacity onPress={onClose}>
+								<X size={24} color={iconColor} />
+							</TouchableOpacity>
+						</View>
+					)}
+					{children}
+				</View>
+			</Animated.View>
+		</View>
 	);
 }
