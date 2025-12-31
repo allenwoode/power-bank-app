@@ -1,3 +1,4 @@
+import BottomModal from '@/components/ui/bottom-modal';
 import DeviceActionButtons from '@/components/ui/device-action-buttons';
 import CustomAlert from '@/components/ui/system-alert';
 import TopTitle from '@/components/ui/top-title';
@@ -9,11 +10,14 @@ import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import {
 	Battery,
 	BatteryPlus,
+	ChevronDown,
 	ChevronRight,
+	ChevronUp,
 	Clock,
 	Droplet,
 	MapPin,
 	Package,
+	Paintbrush,
 	Thermometer,
 	Zap,
 } from 'lucide-react-native';
@@ -21,6 +25,9 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+// 定义存储 Key
+const STORAGE_KEY_SORT_ORDER = 'device_detail_sort_order';
 
 interface DeviceDetail {
 	id: string;
@@ -83,6 +90,18 @@ export default function DeviceDetailPage() {
 	const [device, setDevice] = useState<DeviceDetail | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [alertVisible, setAlertVisible] = useState(false);
+	const [settingsModalVisible, setSettingsModalVisible] = useState(false);
+
+	// 默认顺序
+	const [itemOrder, setItemOrder] = useState([
+		'capacity',
+		'batteryHealth',
+		'voltage',
+		'temperature',
+		'usageTime',
+		'lastCharged',
+	]);
+
 	const { t } = useTranslation();
 	const colorScheme = useColorScheme();
 	const [alertConfig, setAlertConfig] = useState<{
@@ -101,6 +120,34 @@ export default function DeviceDetailPage() {
 		showCancel: false,
 	});
 
+	// --- 新增：加载保存的排序 ---
+	useEffect(() => {
+		const loadSortOrder = async () => {
+			try {
+				const savedOrder = await AsyncStorage.getItem(STORAGE_KEY_SORT_ORDER);
+				if (savedOrder) {
+					setItemOrder(JSON.parse(savedOrder));
+				}
+			} catch (error) {
+				console.error('Failed to load sort order:', error);
+			}
+		};
+		loadSortOrder();
+	}, []);
+
+	// --- 新增：更新顺序并保存到本地 ---
+	const updateItemOrder = async (newOrder: string[]) => {
+		setItemOrder(newOrder); // 更新 UI
+		try {
+			await AsyncStorage.setItem(
+				STORAGE_KEY_SORT_ORDER,
+				JSON.stringify(newOrder)
+			); // 保存到存储
+		} catch (error) {
+			console.error('Failed to save sort order:', error);
+		}
+	};
+
 	// eslint-disable-next-line react-hooks/exhaustive-deps
 	const loadDevice = async () => {
 		try {
@@ -109,7 +156,6 @@ export default function DeviceDetailPage() {
 				const savedDevices = JSON.parse(devicesJson);
 				const foundDevice = savedDevices.find((d: any) => d.id === deviceId);
 				if (foundDevice) {
-					// 分配颜色
 					const colors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444'];
 					const colorIndex = savedDevices.indexOf(foundDevice);
 					setDevice({
@@ -125,7 +171,6 @@ export default function DeviceDetailPage() {
 					return;
 				}
 			}
-			// 如果没找到，使用默认数据
 			const defaultDevice = defaultDeviceDetails[deviceId];
 			setDevice(defaultDevice || null);
 			setLoading(false);
@@ -141,7 +186,69 @@ export default function DeviceDetailPage() {
 		loadDevice();
 	}, [deviceId, loadDevice]);
 
-	const handleRemoveDevice = async () => {
+	const renderDetailItem = (key: string) => {
+		const items = {
+			capacity: {
+				icon: (
+					<Battery
+						size={20}
+						color={colorScheme === 'dark' ? 'white' : 'black'}
+					/>
+				),
+				label: t('device-detail-info-capacity'),
+				value: device?.capacity || '20000mAh',
+			},
+			batteryHealth: {
+				icon: (
+					<BatteryPlus
+						size={20}
+						color={colorScheme === 'dark' ? 'white' : 'black'}
+					/>
+				),
+				label: t('device-detail-info-battery-health'),
+				value: device?.batteryHealth || '95%',
+			},
+			voltage: {
+				icon: (
+					<Zap size={20} color={colorScheme === 'dark' ? 'white' : 'black'} />
+				),
+				label: t('device-detail-info-output-voltage'),
+				value: device?.voltage || t('unknown'),
+			},
+			temperature: {
+				icon: (
+					<Thermometer
+						size={20}
+						color={colorScheme === 'dark' ? 'white' : 'black'}
+					/>
+				),
+				label: t('device-detail-info-current-temperature'),
+				value: device?.temperature || t('unknown'),
+			},
+			usageTime: {
+				icon: (
+					<Clock size={20} color={colorScheme === 'dark' ? 'white' : 'black'} />
+				),
+				label: t('device-detail-info-usage-time'),
+				value: device?.usageTime || t('unknown'),
+			},
+			lastCharged: {
+				icon: (
+					<Droplet
+						size={20}
+						color={colorScheme === 'dark' ? 'white' : 'black'}
+					/>
+				),
+				label: t('device-detail-info-last-charged'),
+				value: device?.lastCharged || t('unknown'),
+			},
+		};
+		const item = items[key as keyof typeof items];
+		if (!item) return null;
+		return <DetailItem key={key} {...item} />;
+	};
+
+	const handleRemoveDevice = () => {
 		setAlertConfig({
 			title: t('tip'),
 			message: `${t('device-detail-alert-confirm-delete-device')} "${device?.name}"?`,
@@ -342,9 +449,20 @@ export default function DeviceDetailPage() {
 				</View>
 
 				<View className="px-4">
-					<Text className="mb-2 text-2xl font-bold text-black dark:text-white">
-						{t('device-detail-info-title')}
-					</Text>
+					<View className="mb-2 flex-row items-center justify-between">
+						<Text className="text-2xl font-bold text-black dark:text-white">
+							{t('device-detail-info-title')}
+						</Text>
+						<Pressable
+							onPress={() => setSettingsModalVisible(true)}
+							className="rounded-full bg-gray-100 p-2 dark:bg-gray-800"
+						>
+							<Paintbrush
+								size={20}
+								color={colorScheme === 'dark' ? 'white' : 'black'}
+							/>
+						</Pressable>
+					</View>
 				</View>
 
 				{/* Details Section */}
@@ -354,71 +472,7 @@ export default function DeviceDetailPage() {
 					style={{ paddingBottom: insets.bottom }}
 				>
 					<View className="p-4">
-						<DetailItem
-							icon={
-								<Battery
-									size={20}
-									color={colorScheme === 'dark' ? 'white' : 'black'}
-								/>
-							}
-							label={t('device-detail-info-capacity')}
-							value={device.capacity || '20000mAh'}
-						/>
-
-						<DetailItem
-							icon={
-								<BatteryPlus
-									size={20}
-									color={colorScheme === 'dark' ? 'white' : 'black'}
-								/>
-							}
-							label={t('device-detail-info-battery-health')}
-							value={device.batteryHealth || '95%'}
-						/>
-
-						<DetailItem
-							icon={
-								<Zap
-									size={20}
-									color={colorScheme === 'dark' ? 'white' : 'black'}
-								/>
-							}
-							label={t('device-detail-info-output-voltage')}
-							value={device.voltage || t('unknown')}
-						/>
-
-						<DetailItem
-							icon={
-								<Thermometer
-									size={20}
-									color={colorScheme === 'dark' ? 'white' : 'black'}
-								/>
-							}
-							label={t('device-detail-info-current-temperature')}
-							value={device.temperature || t('unknown')}
-						/>
-
-						<DetailItem
-							icon={
-								<Clock
-									size={20}
-									color={colorScheme === 'dark' ? 'white' : 'black'}
-								/>
-							}
-							label={t('device-detail-info-usage-time')}
-							value={device.usageTime || t('unknown')}
-						/>
-
-						<DetailItem
-							icon={
-								<Droplet
-									size={20}
-									color={colorScheme === 'dark' ? 'white' : 'black'}
-								/>
-							}
-							label={t('device-detail-info-last-charged')}
-							value={device.lastCharged || t('unknown')}
-						/>
+						{itemOrder.map((key) => renderDetailItem(key))}
 					</View>
 				</ScrollView>
 
@@ -444,6 +498,94 @@ export default function DeviceDetailPage() {
 				onConfirm={alertConfig.onConfirm || (() => setAlertVisible(false))}
 				onCancel={() => setAlertVisible(false)}
 			/>
+
+			<BottomModal
+				visible={settingsModalVisible}
+				onClose={() => setSettingsModalVisible(false)}
+				title={t('device-detail-settings-sort')}
+			>
+				<View className="gap-3 pb-6">
+					<Text className="mb-2 text-sm text-gray-500 dark:text-gray-400">
+						{t('device-detail-settings-description')}
+					</Text>
+					{itemOrder.map((key, index) => {
+						const labels = {
+							capacity: t('device-detail-info-capacity'),
+							batteryHealth: t('device-detail-info-battery-health'),
+							voltage: t('device-detail-info-output-voltage'),
+							temperature: t('device-detail-info-current-temperature'),
+							usageTime: t('device-detail-info-usage-time'),
+							lastCharged: t('device-detail-info-last-charged'),
+						};
+
+						const isFirst = index === 0;
+						const isLast = index === itemOrder.length - 1;
+
+						return (
+							<View
+								key={key}
+								className="flex-row items-center justify-between rounded-2xl bg-gray-50 p-4 dark:bg-gray-800/80"
+							>
+								<View className="flex-row items-center gap-3">
+									<Text className="w-4 text-sm font-bold text-gray-400">
+										{index + 1}
+									</Text>
+									<Text className="text-base font-medium text-gray-900 dark:text-white">
+										{labels[key as keyof typeof labels]}
+									</Text>
+								</View>
+
+								{/* 按钮区域 */}
+								<View className="flex-row gap-2">
+									<Pressable
+										onPress={() => {
+											if (index > 0) {
+												const newOrder = [...itemOrder];
+												[newOrder[index], newOrder[index - 1]] = [
+													newOrder[index - 1],
+													newOrder[index],
+												];
+												updateItemOrder(newOrder);
+											}
+										}}
+										disabled={isFirst}
+										className={`h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm dark:bg-gray-700 ${
+											isFirst ? 'opacity-30' : 'active:scale-95'
+										}`}
+									>
+										<ChevronUp
+											size={20}
+											color={colorScheme === 'dark' ? '#E5E7EB' : '#374151'}
+										/>
+									</Pressable>
+
+									<Pressable
+										onPress={() => {
+											if (index < itemOrder.length - 1) {
+												const newOrder = [...itemOrder];
+												[newOrder[index], newOrder[index + 1]] = [
+													newOrder[index + 1],
+													newOrder[index],
+												];
+												updateItemOrder(newOrder);
+											}
+										}}
+										disabled={isLast}
+										className={`h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm dark:bg-gray-700 ${
+											isLast ? 'opacity-30' : 'active:scale-95'
+										}`}
+									>
+										<ChevronDown
+											size={20}
+											color={colorScheme === 'dark' ? '#E5E7EB' : '#374151'}
+										/>
+									</Pressable>
+								</View>
+							</View>
+						);
+					})}
+				</View>
+			</BottomModal>
 		</>
 	);
 }
