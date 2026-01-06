@@ -1,3 +1,4 @@
+import * as WebBrowser from 'expo-web-browser';
 import Card from '@/components/ui/card';
 import CustomAlert from '@/components/ui/system-alert';
 import TopTitle from '@/components/ui/top-title';
@@ -6,7 +7,7 @@ import { Stack } from 'expo-router';
 import { Info } from 'lucide-react-native';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Linking, Text, TouchableOpacity, View } from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
 
 export default function AboutPage() {
 	const { t } = useTranslation();
@@ -87,7 +88,6 @@ export default function AboutPage() {
 				message={t('settings-app-setting-about-check-update-desc')}
 				onConfirm={() => {
 					setShowUpdateAlert(false);
-					// 这里可以添加实际的检查更新逻辑
 				}}
 				onCancel={() => setShowUpdateAlert(false)}
 				confirmText={t('update-check')}
@@ -98,8 +98,10 @@ export default function AboutPage() {
 				title={t('settings-app-setting-about-i18n-title')}
 				message={t('settings-app-setting-about-i18n-content')}
 				confirmText={t('settings-app-setting-about-i18n-confirm')}
-				onConfirm={() => {
-					Linking.openURL('https://github.com/1Yie/pb-i18n');
+				onConfirm={async () => {
+					await WebBrowser.openAuthSessionAsync(
+						'https://github.com/1Yie/pb-i18n'
+					);
 					setShowI18nAlert(false);
 				}}
 				onCancel={() => setShowI18nAlert(false)}

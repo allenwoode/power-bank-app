@@ -5,25 +5,26 @@ import TopTitle from '@/components/ui/top-title';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useDebouncedNavigation } from '@/hooks/use-debounced-navigation';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import {
 	ArrowDownUp,
 	Battery,
 	BatteryPlus,
-	ChevronDown,
 	ChevronRight,
-	ChevronUp,
 	Clock,
 	Droplet,
+	GripVertical,
 	MapPin,
 	Package,
 	Thermometer,
 	Zap,
 } from 'lucide-react-native';
-import { useEffect, useState } from 'react';
+import { memo, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, Text, View } from 'react-native';
+import DraggableFlatList from 'react-native-draggable-flatlist';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 // 定义存储 Key
 const STORAGE_KEY_SORT_ORDER = 'device_detail_sort_order';
@@ -53,11 +54,16 @@ interface DetailItemProps {
 
 function DetailItem({ icon, label, value }: DetailItemProps) {
 	const colorScheme = useColorScheme();
+
+	const gradientColors = useMemo(
+		(): [string, string] =>
+			colorScheme === 'dark' ? ['#374151', '#374151'] : ['#F3F4F6', '#F3F4F6'],
+		[colorScheme]
+	);
+
 	return (
 		<LinearGradient
-			colors={
-				colorScheme === 'dark' ? ['#374151', '#374151'] : ['#F3F4F6', '#F3F4F6']
-			}
+			colors={gradientColors}
 			start={{ x: 0, y: 0 }}
 			end={{ x: 1, y: 1 }}
 			style={{
@@ -79,6 +85,8 @@ function DetailItem({ icon, label, value }: DetailItemProps) {
 		</LinearGradient>
 	);
 }
+
+const MemoizedDetailItem = memo(DetailItem);
 
 export default function DeviceDetailPage() {
 	const { push } = useDebouncedNavigation(500);
@@ -135,16 +143,15 @@ export default function DeviceDetailPage() {
 	}, []);
 
 	// 更新顺序并保存到本地
-	const updateItemOrder = async (newOrder: string[]) => {
-		setItemOrder(newOrder); // 更新 UI
-		try {
-			await AsyncStorage.setItem(
-				STORAGE_KEY_SORT_ORDER,
-				JSON.stringify(newOrder)
-			); // 保存到存储
-		} catch (error) {
+	const updateItemOrder = (newOrder: string[]) => {
+		setItemOrder(newOrder); // 立即更新 UI
+		// 异步保存到存储
+		AsyncStorage.setItem(
+			STORAGE_KEY_SORT_ORDER,
+			JSON.stringify(newOrder)
+		).catch((error) => {
 			console.error('Failed to save sort order:', error);
-		}
+		});
 	};
 
 	// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -185,8 +192,8 @@ export default function DeviceDetailPage() {
 		loadDevice();
 	}, [deviceId, loadDevice]);
 
-	const renderDetailItem = (key: string) => {
-		const items = {
+	const detailItems = useMemo(
+		() => ({
 			capacity: {
 				icon: (
 					<Battery
@@ -241,10 +248,14 @@ export default function DeviceDetailPage() {
 				label: t('device-detail-info-last-charged'),
 				value: device?.lastCharged || t('unknown'),
 			},
-		};
-		const item = items[key as keyof typeof items];
+		}),
+		[t, colorScheme, device]
+	);
+
+	const renderDetailItem = (key: string) => {
+		const item = detailItems[key as keyof typeof detailItems];
 		if (!item) return null;
-		return <DetailItem key={key} {...item} />;
+		return <MemoizedDetailItem key={key} {...item} />;
 	};
 
 	const handleRemoveDevice = () => {
@@ -503,87 +514,64 @@ export default function DeviceDetailPage() {
 				onClose={() => setSettingsModalVisible(false)}
 				title={t('device-detail-settings-sort')}
 			>
-				<View className="gap-3 pb-6">
-					<Text className="mb-2 text-sm text-gray-500 dark:text-gray-400">
+				<View
+					className="pb-6"
+					style={{ height: 530, paddingBottom: insets.bottom + 16 }}
+				>
+					<Text className="mb-4 text-sm text-gray-500 dark:text-gray-400">
 						{t('device-detail-settings-description')}
 					</Text>
 
-					{itemOrder.map((key, index) => {
-						const labels = {
-							capacity: t('device-detail-info-capacity'),
-							batteryHealth: t('device-detail-info-battery-health'),
-							voltage: t('device-detail-info-output-voltage'),
-							temperature: t('device-detail-info-current-temperature'),
-							usageTime: t('device-detail-info-usage-time'),
-							lastCharged: t('device-detail-info-last-charged'),
-						};
+					<DraggableFlatList
+						data={itemOrder}
+						onDragEnd={({ data }) => updateItemOrder(data)}
+						onDragBegin={() => {
+							Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+						}}
+						keyExtractor={(item) => item}
+						showsVerticalScrollIndicator={false}
+						dragHitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+						renderItem={({ item: key, drag, isActive, getIndex }) => {
+							const labels = {
+								capacity: t('device-detail-info-capacity'),
+								batteryHealth: t('device-detail-info-battery-health'),
+								voltage: t('device-detail-info-output-voltage'),
+								temperature: t('device-detail-info-current-temperature'),
+								usageTime: t('device-detail-info-usage-time'),
+								lastCharged: t('device-detail-info-last-charged'),
+							};
 
-						const isFirst = index === 0;
-						const isLast = index === itemOrder.length - 1;
+							const index = getIndex() ?? 0;
 
-						return (
-							<View
-								key={key}
-								className="flex-row items-center justify-between rounded-2xl bg-gray-50 p-4 dark:bg-gray-800/80"
-							>
-								<View className="flex-row items-center gap-3">
-									<Text className="w-4 text-sm font-bold text-gray-400">
-										{index + 1}
-									</Text>
-									<Text className="text-base font-medium text-gray-900 dark:text-white">
-										{labels[key as keyof typeof labels]}
-									</Text>
-								</View>
+							return (
+								<Pressable
+									onLongPress={drag}
+									disabled={isActive}
+									className={`mb-3 flex-row items-center justify-between rounded-2xl p-4 ${
+										isActive
+											? 'bg-blue-50 dark:bg-blue-900/30'
+											: 'bg-gray-50 dark:bg-gray-800/80'
+									}`}
+								>
+									<View className="flex-row items-center gap-3">
+										<Text className="w-4 text-sm font-bold text-gray-400">
+											{index + 1}
+										</Text>
+										<Text className="text-base font-medium text-gray-900 dark:text-white">
+											{labels[key as keyof typeof labels]}
+										</Text>
+									</View>
 
-								{/* 按钮区域 */}
-								<View className="flex-row gap-2">
-									<Pressable
-										onPress={() => {
-											if (index > 0) {
-												const newOrder = [...itemOrder];
-												[newOrder[index], newOrder[index - 1]] = [
-													newOrder[index - 1],
-													newOrder[index],
-												];
-												updateItemOrder(newOrder);
-											}
-										}}
-										disabled={isFirst}
-										className={`h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm dark:bg-gray-700 ${
-											isFirst ? 'opacity-30' : 'active:scale-95'
-										}`}
-									>
-										<ChevronUp
+									<View className="h-10 w-10 items-center justify-center">
+										<GripVertical
 											size={20}
-											color={colorScheme === 'dark' ? '#E5E7EB' : '#374151'}
+											color={colorScheme === 'dark' ? '#9CA3AF' : '#6B7280'}
 										/>
-									</Pressable>
-
-									<Pressable
-										onPress={() => {
-											if (index < itemOrder.length - 1) {
-												const newOrder = [...itemOrder];
-												[newOrder[index], newOrder[index + 1]] = [
-													newOrder[index + 1],
-													newOrder[index],
-												];
-												updateItemOrder(newOrder);
-											}
-										}}
-										disabled={isLast}
-										className={`h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm dark:bg-gray-700 ${
-											isLast ? 'opacity-30' : 'active:scale-95'
-										}`}
-									>
-										<ChevronDown
-											size={20}
-											color={colorScheme === 'dark' ? '#E5E7EB' : '#374151'}
-										/>
-									</Pressable>
-								</View>
-							</View>
-						);
-					})}
+									</View>
+								</Pressable>
+							);
+						}}
+					/>
 				</View>
 			</BottomModal>
 		</>

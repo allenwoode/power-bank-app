@@ -15,7 +15,6 @@ interface CustomAlertProps {
 	onCancel?: () => void;
 	confirmText?: string;
 	cancelText?: string;
-	// 是否只显示一个按钮（用于纯提示）
 	singleButton?: boolean;
 }
 
@@ -31,21 +30,13 @@ export default function CustomAlert({
 }: CustomAlertProps) {
 	return (
 		<Modal
-			animationType="fade" // 淡入淡出效果
-			transparent={true} // 背景透明，这样才能看到底下的半透明遮罩
+			animationType="fade"
+			transparent={true}
 			visible={visible}
-			onRequestClose={onCancel} // 安卓物理返回键关闭
+			onRequestClose={onCancel}
 		>
-			{/* 
-         1. 外层容器：全屏半透明黑色背景 
-         bg-black/50 代表 50% 透明度的黑色 (NativeWind 写法)
-      */}
 			<TouchableWithoutFeedback onPress={onCancel}>
 				<View className="flex-1 items-center justify-center bg-black/50 px-6">
-					{/* 
-             2. 弹窗卡片：白色背景，圆角，阴影 
-             active:scale-100 用于阻止点击卡片时触发外层的关闭事件
-          */}
 					<TouchableWithoutFeedback>
 						<View className="w-full max-w-sm items-center rounded-3xl bg-white p-6 shadow-xl">
 							{/* 标题 */}

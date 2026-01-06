@@ -21,6 +21,7 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
+
 /*
  * 原生 Modal 在处理键盘弹出时会有一些问题，尤其是在 Android 上
  * 这里使用一个自定义的底部弹出 Modal 组件
