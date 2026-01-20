@@ -69,9 +69,7 @@ const getDeviceTypeIcon = (
 			if (buf.length >= 8 && buf[7] === 0x1f) {
 				type = Tv;
 			}
-		} catch {
-			// ignore
-		}
+		} catch {}
 	}
 
 	if (type === Bluetooth && deviceName) {
@@ -269,7 +267,7 @@ export default function AddDevicePage() {
 					}, 20000);
 				});
 
-				// 执行竞速，无论输赢都清除定时器
+				// 无论输赢都清除定时器
 				await Promise.race([connectPromise, timeoutPromise]).finally(() => {
 					if (timeoutId) clearTimeout(timeoutId);
 				});

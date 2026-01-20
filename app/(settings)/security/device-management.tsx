@@ -25,7 +25,6 @@ export default function DeviceManagementPage() {
 		name: string;
 	} | null>(null);
 
-	// Mock device data - in real app this would come from API
 	const devices: Device[] = [
 		{
 			id: '1',

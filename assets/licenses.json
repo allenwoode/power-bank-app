@@ -45,8 +45,8 @@
 		"licensePeriod": "perpetual",
 		"material": "material",
 		"licenseType": "MIT",
-		"link": "https://github.com/react-navigation/react-navigation.git",
-		"remoteVersion": "7.9.0",
+		"link": "git+https://github.com/react-navigation/react-navigation.git",
+		"remoteVersion": "7.10.1",
 		"installedVersion": "7.8.11",
 		"definedVersion": "^7.4.0",
 		"author": "n/a"
@@ -59,7 +59,7 @@
 		"material": "material",
 		"licenseType": "MIT",
 		"link": "https://github.com/react-navigation/react-navigation.git",
-		"remoteVersion": "2.9.3",
+		"remoteVersion": "2.9.5",
 		"installedVersion": "2.9.1",
 		"definedVersion": "^2.6.3",
 		"author": "n/a"
@@ -72,7 +72,7 @@
 		"material": "material",
 		"licenseType": "MIT",
 		"link": "https://github.com/react-navigation/react-navigation.git",
-		"remoteVersion": "7.1.26",
+		"remoteVersion": "7.1.28",
 		"installedVersion": "7.1.24",
 		"definedVersion": "^7.1.8",
 		"author": "n/a"
@@ -98,7 +98,7 @@
 		"material": "material",
 		"licenseType": "MIT",
 		"link": "git+https://github.com/expo/expo.git",
-		"remoteVersion": "54.0.30",
+		"remoteVersion": "54.0.31",
 		"installedVersion": "54.0.25",
 		"definedVersion": "~54.0.25",
 		"author": "Expo"
@@ -124,7 +124,7 @@
 		"material": "material",
 		"licenseType": "MIT",
 		"link": "git+https://github.com/expo/expo.git",
-		"remoteVersion": "18.0.12",
+		"remoteVersion": "18.0.13",
 		"installedVersion": "18.0.12",
 		"definedVersion": "~18.0.10",
 		"author": "650 Industries, Inc."
@@ -215,7 +215,7 @@
 		"material": "material",
 		"licenseType": "MIT",
 		"link": "git+https://github.com/expo/expo.git",
-		"remoteVersion": "0.32.15",
+		"remoteVersion": "0.32.16",
 		"installedVersion": "0.32.14",
 		"definedVersion": "^0.32.14",
 		"author": "650 Industries, Inc."
@@ -306,7 +306,7 @@
 		"material": "material",
 		"licenseType": "MIT",
 		"link": "git+https://github.com/i18next/i18next.git",
-		"remoteVersion": "25.7.3",
+		"remoteVersion": "25.7.4",
 		"installedVersion": "25.7.2",
 		"definedVersion": "^25.7.2",
 		"author": "Jan Mühlemann <jan.muehlemann@gmail.com> (https://github.com/jamuhl)"
@@ -384,7 +384,7 @@
 		"material": "material",
 		"licenseType": "MIT",
 		"link": "git+https://github.com/i18next/react-i18next.git",
-		"remoteVersion": "16.5.0",
+		"remoteVersion": "16.5.3",
 		"installedVersion": "16.4.0",
 		"definedVersion": "^16.4.0",
 		"author": "Jan Mühlemann <jan.muehlemann@gmail.com> (https://github.com/jamuhl)"
@@ -414,6 +414,19 @@
 		"installedVersion": "3.5.0",
 		"definedVersion": "^3.5.0",
 		"author": "dotintent (https://withintent.com/)"
+	},
+	{
+		"department": "kessler",
+		"relatedTo": "stuff",
+		"name": "react-native-draggable-flatlist",
+		"licensePeriod": "perpetual",
+		"material": "material",
+		"licenseType": "MIT",
+		"link": "git+https://github.com/computerjazz/react-native-draggable-flatlist.git",
+		"remoteVersion": "4.0.3",
+		"installedVersion": "4.0.3",
+		"definedVersion": "^4.0.3",
+		"author": "Daniel Merrill"
 	},
 	{
 		"department": "kessler",

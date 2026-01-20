@@ -66,7 +66,6 @@ export default function LoginCodePage() {
 					className="flex-1 bg-gray-50 dark:bg-gray-900"
 					style={{ paddingTop: insets.top, paddingBottom: insets.bottom }}
 				>
-					{/* 导航栏 */}
 					<View className="h-14 flex-row items-center justify-between px-4">
 						<TouchableOpacity
 							onPress={() => {
@@ -96,7 +95,6 @@ export default function LoginCodePage() {
 							</Text>
 						</View>
 
-						{/* Tab 切换 */}
 						<View className="mb-8 flex-row rounded-xl bg-gray-200 p-1 dark:bg-gray-700">
 							<View className="flex-1 items-center rounded-lg bg-white py-2 shadow-sm dark:bg-gray-800">
 								<Text className="font-medium text-gray-900 dark:text-white">
@@ -113,7 +111,6 @@ export default function LoginCodePage() {
 							</TouchableOpacity>
 						</View>
 
-						{/* 表单区域 */}
 						<View className="space-y-4">
 							<View className="h-14 flex-row items-center rounded-2xl border border-gray-100 bg-white px-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
 								<Smartphone size={20} color="#9CA3AF" />

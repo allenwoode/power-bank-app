@@ -51,7 +51,6 @@ export default function LoginPasswordPage() {
 				className="flex-1 bg-gray-50 dark:bg-gray-900"
 				style={{ paddingTop: insets.top, paddingBottom: insets.bottom }}
 			>
-				{/* 导航栏 */}
 				<View className="h-14 flex-row items-center justify-between px-4">
 					<TouchableOpacity
 						onPress={() => {
@@ -81,7 +80,6 @@ export default function LoginPasswordPage() {
 						</Text>
 					</View>
 
-					{/* Tab 切换：点击验证码登录跳转回 login 路由 */}
 					<View className="mb-8 flex-row rounded-xl bg-gray-200 p-1 dark:bg-gray-700">
 						<TouchableOpacity
 							className="flex-1 items-center rounded-lg py-2"
@@ -98,7 +96,6 @@ export default function LoginPasswordPage() {
 						</View>
 					</View>
 
-					{/* 表单区域：只有手机号+密码 */}
 					<View className="space-y-4">
 						<View className="h-14 flex-row items-center rounded-2xl border border-gray-100 bg-white px-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
 							<Smartphone size={20} color="#9CA3AF" />

@@ -307,7 +307,6 @@ export default function DeviceDetailPage() {
 			<Stack.Screen options={{ headerShown: false }} />
 			<TopTitle title={device.name} showBack={true} />
 			<View className="flex-1 bg-white dark:bg-black">
-				{/* Device Card */}
 				<View className="p-4">
 					<View
 						className="mb-6 items-center justify-center rounded-2xl p-8"
@@ -322,7 +321,6 @@ export default function DeviceDetailPage() {
 						</Text>
 						<Text className="text-lg text-white/80">{device.type}</Text>
 
-						{/* Firmware Version */}
 						<Pressable
 							onPress={() => router.push(`/(device)/ota`)}
 							className="mt-3 flex-row items-center gap-1"
@@ -475,7 +473,6 @@ export default function DeviceDetailPage() {
 					</View>
 				</View>
 
-				{/* Details Section */}
 				<ScrollView
 					className="flex-1"
 					showsVerticalScrollIndicator={false}
@@ -486,7 +483,6 @@ export default function DeviceDetailPage() {
 					</View>
 				</ScrollView>
 
-				{/* Action Buttons */}
 				<DeviceActionButtons
 					primaryButton={{
 						label: t('device-detail-action-delete'),

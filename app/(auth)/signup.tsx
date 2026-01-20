@@ -119,7 +119,6 @@ export default function SignUpPage() {
 		// 模拟注册请求
 		setTimeout(() => {
 			setIsLoading(false);
-			// 注册成功后，通常跳转到 Tabs 或 登录页
 			setAlertConfig({
 				title: t('tip'),
 				message: t('register-alert-message-success'),
@@ -142,7 +141,6 @@ export default function SignUpPage() {
 					className="flex-1 bg-gray-50 dark:bg-gray-900"
 					style={{ paddingTop: insets.top, paddingBottom: insets.bottom }}
 				>
-					{/* 顶部导航栏 */}
 					<View className="h-14 flex-row items-center justify-between px-4">
 						<TouchableOpacity
 							onPress={() =>
@@ -157,7 +155,6 @@ export default function SignUpPage() {
 						</TouchableOpacity>
 					</View>
 
-					{/* 使用 ScrollView 保证在小屏手机上也能滚动，且避免键盘冲突 */}
 					<ScrollView
 						className="flex-1"
 						keyboardShouldPersistTaps="handled"
@@ -174,9 +171,7 @@ export default function SignUpPage() {
 								</Text>
 							</View>
 
-							{/* 表单区域 - 垂直排列，互不干扰 */}
 							<View className="space-y-4">
-								{/* 手机号 */}
 								<View className="h-14 flex-row items-center rounded-2xl border border-gray-100 bg-white px-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
 									<Smartphone size={20} color="#9CA3AF" />
 									<TextInput
@@ -189,7 +184,6 @@ export default function SignUpPage() {
 									/>
 								</View>
 
-								{/* 验证码 */}
 								<View className="mt-4 h-14 flex-row items-center rounded-2xl border border-gray-100 bg-white px-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
 									<KeyRound size={20} color="#9CA3AF" />
 									<TextInput
@@ -216,7 +210,6 @@ export default function SignUpPage() {
 									</TouchableOpacity>
 								</View>
 
-								{/* 设置密码 */}
 								<View className="mt-4 h-14 flex-row items-center rounded-2xl border border-gray-100 bg-white px-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
 									<Lock size={20} color="#9CA3AF" />
 									<TextInput
@@ -238,7 +231,6 @@ export default function SignUpPage() {
 									</TouchableOpacity>
 								</View>
 
-								{/* 用户协议勾选 */}
 								<TouchableOpacity
 									className="mt-4 flex-row items-center"
 									onPress={() => setIsAgreed(!isAgreed)}
@@ -268,14 +260,13 @@ export default function SignUpPage() {
 									</Text>
 								</TouchableOpacity>
 
-								{/* 注册按钮 */}
 								<TouchableOpacity
 									onPress={handleSignUp}
 									disabled={isLoading}
 									className={`mt-6 h-14 items-center justify-center rounded-2xl ${
 										isAgreed
 											? 'bg-black dark:bg-gray-800'
-											: 'bg-gray-300 dark:bg-gray-600' // 未勾选协议时按钮变灰
+											: 'bg-gray-300 dark:bg-gray-600'
 									}`}
 								>
 									{isLoading ? (
@@ -288,7 +279,6 @@ export default function SignUpPage() {
 								</TouchableOpacity>
 							</View>
 
-							{/* 底部引导去登录 */}
 							{/* <View className="flex-1 justify-end pt-10 items-center flex-row justify-center">
               <Text className="text-gray-500">已有账号？</Text>
               <TouchableOpacity onPress={() => router.replace("/(auth)/login")}>
