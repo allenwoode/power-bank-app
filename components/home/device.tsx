@@ -21,35 +21,46 @@ interface DeviceItem {
 	addedAt?: string;
 }
 
-const defaultDevices: DeviceItem[] = [];
+// 用于测试/演示的默认展示设备（不存入 AsyncStorage，仅在无已保存设备时显示）
+const DEMO_DEVICES: DeviceItem[] = [
+	{
+		id: 'demo-device-1',
+		name: 'PowerBank Pro',
+		type: 'PB-100',
+		color: '#3B82F6',
+	},
+];
 
 export function Device() {
 	const { t } = useTranslation();
 	const { push } = useDebouncedNavigation(500);
 	const colorScheme = useColorScheme();
 	const [isGridView, setIsGridView] = useState<boolean>(true);
-	const [devices, setDevices] = useState<DeviceItem[]>(defaultDevices);
+	const [devices, setDevices] = useState<DeviceItem[]>(DEMO_DEVICES);
 
-	// 加载已保存的设备
+	// 加载已保存的设备，无保存数据时显示演示设备
 	const loadDevices = useCallback(async () => {
 		try {
 			const devicesJson = await AsyncStorage.getItem('devices');
 			if (devicesJson) {
 				const savedDevices = JSON.parse(devicesJson);
-				// 为每个设备添加颜色
-				const devicesWithColor = savedDevices.map(
-					(device: any, idx: number) => ({
-						...device,
-						color: ['#3B82F6', '#10B981', '#F59E0B', '#EF4444'][idx % 4],
-					})
-				);
-				setDevices(devicesWithColor);
-			} else {
-				setDevices(defaultDevices);
+				if (Array.isArray(savedDevices) && savedDevices.length > 0) {
+					// 为每个设备添加颜色
+					const devicesWithColor = savedDevices.map(
+						(device: any, idx: number) => ({
+							...device,
+							color: ['#3B82F6', '#10B981', '#F59E0B', '#EF4444'][idx % 4],
+						})
+					);
+					setDevices(devicesWithColor);
+					return;
+				}
 			}
+			// 无已保存设备时回退到演示设备
+			setDevices(DEMO_DEVICES);
 		} catch (err) {
 			console.error('Load devices error:', err);
-			setDevices(defaultDevices);
+			setDevices(DEMO_DEVICES);
 		}
 	}, []);
 

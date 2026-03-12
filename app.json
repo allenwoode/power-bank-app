@@ -2,22 +2,25 @@
 	"expo": {
 		"name": "Power Bank",
 		"slug": "powerbank",
-		"version": "1.0.17",
+		"version": "1.0.18",
 		"orientation": "portrait",
 		"icon": "./assets/images/icon.png",
 		"scheme": "powerbank",
 		"userInterfaceStyle": "automatic",
-		"newArchEnabled": true,
 		"ios": {
 			"supportsTablet": true,
 			"bundleIdentifier": "cn.xixiu.powerbank",
+			"entitlements": {
+				"com.apple.developer.networking.wifi-info": true
+			},
 			"infoPlist": {
 				"UIBackgroundModes": ["bluetooth-central"],
 				"NSBluetoothAlwaysUsageDescription": "我们需要在后台保持与充电宝的连接，以便在您使用其他应用时自动同步充电状态和交换数据。",
 				"NSBluetoothPeripheralUsageDescription": "我们需要使用蓝牙连接周边的充电宝设备。",
-				"NSLocationWhenInUseUsageDescription": "我们需要位置权限来辅助搜索附近的蓝牙设备。"
+				"NSLocationWhenInUseUsageDescription": "我们需要位置权限来辅助搜索附近的蓝牙设备。",
+				"NSLocationAlwaysAndWhenInUseUsageDescription": "我们需要位置权限来发现周边的网络设备。"
 			},
-			"buildNumber": "14"
+			"buildNumber": "15"
 		},
 		"android": {
 			"package": "cn.xixiu.powerbank",
@@ -41,7 +44,7 @@
 			},
 			"edgeToEdgeEnabled": true,
 			"predictiveBackGestureEnabled": false,
-			"versionCode": 14
+			"versionCode": 15
 		},
 		"plugins": [
 			"expo-router",

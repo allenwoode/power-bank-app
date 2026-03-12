@@ -9,21 +9,19 @@ import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import {
-	ArrowDownUp,
 	Battery,
 	BatteryPlus,
-	ChevronRight,
 	Clock,
 	Droplet,
 	GripVertical,
-	MapPin,
-	Package,
+	Plug,
+	RotateCcw,
 	Thermometer,
 	Zap,
 } from 'lucide-react-native';
 import { memo, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, Text, TouchableOpacity, View } from 'react-native';
 import DraggableFlatList from 'react-native-draggable-flatlist';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 // 定义存储 Key
@@ -44,7 +42,21 @@ interface DeviceDetail {
 	addedAt?: string;
 }
 
-const defaultDeviceDetails: Record<string, DeviceDetail> = {};
+const defaultDeviceDetails: Record<string, DeviceDetail> = {
+	'demo-device-1': {
+		id: 'demo-device-1',
+		name: 'PowerBank Pro',
+		type: 'PB-100',
+		color: '#3B82F6',
+		capacity: '20000mAh',
+		battery: 73,
+		voltage: '5V/2A',
+		batteryHealth: '95%',
+		temperature: '25°C',
+		usageTime: '2小时',
+		lastCharged: '2小时前',
+	},
+};
 
 interface DetailItemProps {
 	icon: React.ReactNode;
@@ -104,7 +116,7 @@ export default function DeviceDetailPage() {
 		'capacity',
 		'batteryHealth',
 		'voltage',
-		'temperature',
+		// 'temperature',
 		'usageTime',
 		'lastCharged',
 	]);
@@ -167,7 +179,7 @@ export default function DeviceDetailPage() {
 					setDevice({
 						...foundDevice,
 						color: colors[colorIndex % 4],
-						battery: 85,
+						battery: 73,
 						voltage: '5V/2A',
 						temperature: '25°C',
 						usageTime: '2小时',
@@ -221,16 +233,16 @@ export default function DeviceDetailPage() {
 				label: t('device-detail-info-output-voltage'),
 				value: device?.voltage || t('unknown'),
 			},
-			temperature: {
-				icon: (
-					<Thermometer
-						size={20}
-						color={colorScheme === 'dark' ? 'white' : 'black'}
-					/>
-				),
-				label: t('device-detail-info-current-temperature'),
-				value: device?.temperature || t('unknown'),
-			},
+			// temperature: {
+			// 	icon: (
+			// 		<Thermometer
+			// 			size={20}
+			// 			color={colorScheme === 'dark' ? 'white' : 'black'}
+			// 		/>
+			// 	),
+			// 	label: t('device-detail-info-current-temperature'),
+			// 	value: device?.temperature || t('unknown'),
+			// },
 			usageTime: {
 				icon: (
 					<Clock size={20} color={colorScheme === 'dark' ? 'white' : 'black'} />
@@ -305,36 +317,31 @@ export default function DeviceDetailPage() {
 	return (
 		<>
 			<Stack.Screen options={{ headerShown: false }} />
-			<TopTitle title={device.name} showBack={true} />
+			<TopTitle title="设备详情" showBack={true} />
 			<View className="flex-1 bg-white dark:bg-black">
-				<View className="p-4">
-					<View
-						className="mb-6 items-center justify-center rounded-2xl p-8"
-						style={{
-							backgroundColor: device.color,
-							height: 200,
-						}}
-					>
-						<Zap size={48} color="white" />
-						<Text className="mt-2 text-2xl font-bold text-white">
+				<View className="mx-4 mt-4 flex-row items-center justify-between rounded-2xl bg-gray-100 p-5">
+					<View className="mr-4 flex-1">
+						<Text
+							className="text-3xl font-bold text-[#696969]"
+							numberOfLines={1}
+							ellipsizeMode="tail"
+						>
 							{device.name}
 						</Text>
-						<Text className="text-lg text-white/80">{device.type}</Text>
-
-						<Pressable
-							onPress={() => router.push(`/(device)/ota`)}
-							className="mt-3 flex-row items-center gap-1"
-						>
-							<Package size={14} color="white" strokeWidth={2} />
-							<Text className="text-base text-white/80">
-								{t('device-detail-ota-version')} v2.5.1
-							</Text>
-							<ChevronRight size={16} color="white" strokeWidth={2} />
-						</Pressable>
+						<Text className="mt-1 text-sm text-gray-400">1 分钟前同步</Text>
 					</View>
-					<View className="mb-2 flex-row items-stretch" style={{ gap: 12 }}>
-						{/* 电池百分比 */}
-						<View style={{ flex: 1, height: 100 }}>
+
+					<TouchableOpacity
+						onPress={() => {}}
+						className="h-10 w-10 items-center justify-center rounded-full bg-gray-200/50"
+						activeOpacity={0.7}
+					>
+						<RotateCcw size={20} color="#696969" />
+					</TouchableOpacity>
+				</View>
+				<View className="p-4">
+					<View className="flex-row flex-wrap" style={{ gap: 12 }}>
+						<View style={{ flex: 1, minWidth: '45%', height: 140 }}>
 							<LinearGradient
 								colors={
 									colorScheme === 'dark'
@@ -354,7 +361,7 @@ export default function DeviceDetailPage() {
 									<Text
 										numberOfLines={1}
 										ellipsizeMode="tail"
-										className="text-xs text-gray-600 dark:text-gray-200"
+										className="text-sm text-gray-600 dark:text-gray-200"
 									>
 										{t('device-detail-power')}
 									</Text>
@@ -364,20 +371,21 @@ export default function DeviceDetailPage() {
 										strokeWidth={2}
 									/>
 								</View>
-								<Text className="mb-2 text-2xl font-bold text-blue-600 dark:text-blue-400">
-									{device.battery || 0}%
-								</Text>
-								<View className="h-2 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
-									<View
-										className="h-full rounded-full bg-blue-500 dark:bg-blue-400"
-										style={{ width: `${device.battery || 0}%` }}
-									/>
+								<View>
+									<Text className="mb-2 text-3xl font-bold text-blue-600 dark:text-blue-400">
+										{device.battery || 0}%
+									</Text>
+									<View className="h-2 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
+										<View
+											className="h-full rounded-full bg-blue-500 dark:bg-blue-400"
+											style={{ width: `${device.battery || 0}%` }}
+										/>
+									</View>
 								</View>
 							</LinearGradient>
 						</View>
 
-						{/* 充放电状态 */}
-						<View style={{ flex: 1, height: 100 }}>
+						<View style={{ flex: 1, minWidth: '45%', height: 140 }}>
 							<LinearGradient
 								colors={
 									colorScheme === 'dark'
@@ -397,9 +405,9 @@ export default function DeviceDetailPage() {
 									<Text
 										numberOfLines={1}
 										ellipsizeMode="tail"
-										className="text-xs text-gray-600 dark:text-gray-200"
+										className="text-sm text-gray-600 dark:text-gray-200"
 									>
-										{t('device-detail-status')}
+										{t('device-detail-charge-discharge-power')}
 									</Text>
 									<Zap
 										size={18}
@@ -407,29 +415,25 @@ export default function DeviceDetailPage() {
 										strokeWidth={2}
 									/>
 								</View>
-								<Text className="text-lg font-bold text-green-600 dark:text-green-400">
-									{t('device-detail-status-charging')}
-								</Text>
-								<Text
+								<View className="flex flex-row items-end gap-1">
+									<Text className="text-3xl font-bold text-green-600 dark:text-green-400">
+										35
+									</Text>
+									<Text className="text-lg font-bold text-green-500 dark:text-green-400">
+										{t('device-detail-charge-discharge-power-status')}
+									</Text>
+								</View>
+								{/* <Text
 									numberOfLines={1}
 									ellipsizeMode="tail"
 									className="mt-1 text-xs text-green-500 dark:text-green-400"
 								>
-									{t('device-detail-status-time-remaining')}
-								</Text>
+									{t('device-detail-charge-discharge-power-time-remaining')}
+								</Text> */}
 							</LinearGradient>
 						</View>
 
-						{/* 定位地图 */}
-						<Pressable
-							onPress={() =>
-								push({
-									pathname: '/(device)/map',
-									params: { lng: '120.123', lat: '30.456' },
-								})
-							}
-							style={{ flex: 1, height: 100 }}
-						>
+						<View style={{ flex: 1, minWidth: '45%', height: 140 }}>
 							<LinearGradient
 								colors={
 									colorScheme === 'dark'
@@ -449,43 +453,92 @@ export default function DeviceDetailPage() {
 									<Text
 										numberOfLines={1}
 										ellipsizeMode="tail"
-										className="text-xs text-gray-600 dark:text-gray-200"
+										className="text-sm text-gray-600 dark:text-gray-200"
 									>
-										{t('device-detail-location')}
+										{t('device-detail-charges-number')}
 									</Text>
-									<MapPin
+									<Plug
 										size={18}
 										color={colorScheme === 'dark' ? '#C084FC' : '#A855F7'}
 										strokeWidth={2}
 									/>
 								</View>
-								<Text
-									numberOfLines={1}
-									ellipsizeMode="tail"
-									className="mb-2 text-xs font-semibold text-purple-600 dark:text-purple-400"
-								>
-									深圳市南山区
-								</Text>
-								<View className="flex-row items-center">
+								<View className="flex flex-row items-end gap-1">
+									<Text className="text-3xl font-bold text-purple-600 dark:text-purple-400">
+										9
+									</Text>
+									<Text className="text-lg font-bold text-purple-500 dark:text-purple-400">
+										{t('device-detail-charges-number-status')}
+									</Text>
+								</View>
+							</LinearGradient>
+						</View>
+
+						<View style={{ flex: 1, minWidth: '45%', height: 140 }}>
+							<LinearGradient
+								colors={
+									colorScheme === 'dark'
+										? ['#BBFAFC', '#E7FDFE']
+										: ['#BBFAFC', '#E7FDFE']
+								}
+								start={{ x: 0, y: 0 }}
+								end={{ x: 1, y: 1 }}
+								style={{
+									padding: 16,
+									borderRadius: 16,
+									height: '100%',
+									justifyContent: 'space-between',
+								}}
+							>
+								<View className="mb-3 flex-row items-center justify-between">
 									<Text
 										numberOfLines={1}
 										ellipsizeMode="tail"
-										className="text-xs text-purple-500 dark:text-purple-400"
+										className="text-sm text-gray-600 dark:text-gray-200"
 									>
-										{t('device-detail-location-map')}
+										{t('device-detail-temp')}
 									</Text>
-									<ChevronRight
-										size={14}
-										color={colorScheme === 'dark' ? '#C084FC' : '#A855F7'}
+									<Thermometer
+										size={18}
+										color={colorScheme === 'dark' ? '#BBFAFC' : '#09C1C8'}
 										strokeWidth={2}
 									/>
 								</View>
+								<View className="flex flex-row items-end gap-1">
+									<Text className="text-3xl font-bold text-sky-500 dark:text-sky-400">
+										28.5
+									</Text>
+									<Text className="text-lg font-bold text-sky-600 dark:text-sky-400">
+										{t('device-detail-temp-status')}
+									</Text>
+								</View>
 							</LinearGradient>
-						</Pressable>
+						</View>
 					</View>
 				</View>
 
-				<View className="px-4 ">
+				{/* <View className="mx-4 mb-4 flex-1 overflow-hidden rounded-2xl border border-gray-200 bg-gray-100 dark:border-gray-700 dark:bg-gray-900">
+					<GMapView />
+					<View className="absolute left-3 right-3 top-3 flex-row items-center justify-between">
+						<View className="rounded-lg bg-white/90 px-3 py-1.5 dark:bg-black/70">
+							<Text className="text-sm font-semibold text-gray-800 dark:text-gray-100">
+								设备位置
+							</Text>
+						</View>
+						<TouchableOpacity
+							onPress={() => {}}
+							className="h-8 w-8 items-center justify-center rounded-full bg-white/90 dark:bg-black/70"
+							activeOpacity={0.7}
+						>
+							<RotateCcw
+								size={16}
+								color={colorScheme === 'dark' ? '#F3F4F6' : '#374151'}
+							/>
+						</TouchableOpacity>
+					</View>
+				</View> */}
+
+				{/* <View className="px-4">
 					<View className="mb-1 flex-row items-center justify-between ">
 						<Text className="text-2xl font-bold text-black dark:text-white">
 							{t('device-detail-info-title')}
@@ -500,9 +553,9 @@ export default function DeviceDetailPage() {
 							/>
 						</Pressable>
 					</View>
-				</View>
+				</View> */}
 
-				<ScrollView
+				{/* <ScrollView
 					className="flex-1 "
 					showsVerticalScrollIndicator={false}
 					style={{ paddingBottom: insets.bottom }}
@@ -510,17 +563,17 @@ export default function DeviceDetailPage() {
 					<View className="p-4 ">
 						{itemOrder.map((key) => renderDetailItem(key))}
 					</View>
-				</ScrollView>
-
-				<DeviceActionButtons
-					primaryButton={{
-						label: t('device-detail-action-delete'),
-						backgroundColor: 'bg-gray-400 dark:bg-gray-800',
-						onPress: handleRemoveDevice,
-					}}
-					showSecondary={false}
-				/>
+				</ScrollView> */}
 			</View>
+
+			<DeviceActionButtons
+				primaryButton={{
+					label: t('device-detail-action-delete'),
+					backgroundColor: 'bg-gray-400 dark:bg-gray-800',
+					onPress: handleRemoveDevice,
+				}}
+				showSecondary={false}
+			/>
 
 			<CustomAlert
 				visible={alertVisible}

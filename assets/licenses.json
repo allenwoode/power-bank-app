@@ -20,7 +20,7 @@
 		"material": "material",
 		"licenseType": "MIT",
 		"link": "git+https://github.com/expo/vector-icons.git",
-		"remoteVersion": "15.0.3",
+		"remoteVersion": "15.1.1",
 		"installedVersion": "15.0.3",
 		"definedVersion": "^15.0.3",
 		"author": "Brent Vatne"
@@ -46,7 +46,7 @@
 		"material": "material",
 		"licenseType": "MIT",
 		"link": "git+https://github.com/react-navigation/react-navigation.git",
-		"remoteVersion": "7.10.1",
+		"remoteVersion": "7.15.5",
 		"installedVersion": "7.8.11",
 		"definedVersion": "^7.4.0",
 		"author": "n/a"
@@ -58,8 +58,8 @@
 		"licensePeriod": "perpetual",
 		"material": "material",
 		"licenseType": "MIT",
-		"link": "https://github.com/react-navigation/react-navigation.git",
-		"remoteVersion": "2.9.5",
+		"link": "git+https://github.com/react-navigation/react-navigation.git",
+		"remoteVersion": "2.9.10",
 		"installedVersion": "2.9.1",
 		"definedVersion": "^2.6.3",
 		"author": "n/a"
@@ -71,8 +71,8 @@
 		"licensePeriod": "perpetual",
 		"material": "material",
 		"licenseType": "MIT",
-		"link": "https://github.com/react-navigation/react-navigation.git",
-		"remoteVersion": "7.1.28",
+		"link": "git+https://github.com/react-navigation/react-navigation.git",
+		"remoteVersion": "7.1.33",
 		"installedVersion": "7.1.24",
 		"definedVersion": "^7.1.8",
 		"author": "n/a"
@@ -98,7 +98,7 @@
 		"material": "material",
 		"licenseType": "MIT",
 		"link": "git+https://github.com/expo/expo.git",
-		"remoteVersion": "54.0.31",
+		"remoteVersion": "54.0.33",
 		"installedVersion": "54.0.25",
 		"definedVersion": "~54.0.25",
 		"author": "Expo"
@@ -137,7 +137,7 @@
 		"material": "material",
 		"licenseType": "MIT",
 		"link": "git+https://github.com/expo/expo.git",
-		"remoteVersion": "14.0.10",
+		"remoteVersion": "14.0.11",
 		"installedVersion": "14.0.10",
 		"definedVersion": "~14.0.9",
 		"author": "650 Industries, Inc."
@@ -228,7 +228,7 @@
 		"material": "material",
 		"licenseType": "MIT",
 		"link": "git+https://github.com/expo/expo.git",
-		"remoteVersion": "6.0.21",
+		"remoteVersion": "6.0.23",
 		"installedVersion": "6.0.15",
 		"definedVersion": "~6.0.15",
 		"author": "650 Industries, Inc."
@@ -306,7 +306,7 @@
 		"material": "material",
 		"licenseType": "MIT",
 		"link": "git+https://github.com/i18next/i18next.git",
-		"remoteVersion": "25.7.4",
+		"remoteVersion": "25.8.17",
 		"installedVersion": "25.7.2",
 		"definedVersion": "^25.7.2",
 		"author": "Jan Mühlemann <jan.muehlemann@gmail.com> (https://github.com/jamuhl)"
@@ -345,7 +345,7 @@
 		"material": "material",
 		"licenseType": "MIT",
 		"link": "git+https://github.com/marklawlor/nativewind.git",
-		"remoteVersion": "4.2.1",
+		"remoteVersion": "4.2.2",
 		"installedVersion": "4.2.1",
 		"definedVersion": "^4.2.1",
 		"author": "Mark Lawlor https://github.com/marklawlor"
@@ -384,7 +384,7 @@
 		"material": "material",
 		"licenseType": "MIT",
 		"link": "git+https://github.com/i18next/react-i18next.git",
-		"remoteVersion": "16.5.3",
+		"remoteVersion": "16.5.6",
 		"installedVersion": "16.4.0",
 		"definedVersion": "^16.4.0",
 		"author": "Jan Mühlemann <jan.muehlemann@gmail.com> (https://github.com/jamuhl)"
@@ -410,7 +410,7 @@
 		"material": "material",
 		"licenseType": "MIT",
 		"link": "git+https://github.com/dotintent/react-native-ble-plx.git",
-		"remoteVersion": "3.5.0",
+		"remoteVersion": "3.5.1",
 		"installedVersion": "3.5.0",
 		"definedVersion": "^3.5.0",
 		"author": "dotintent (https://withintent.com/)"
@@ -444,6 +444,19 @@
 	{
 		"department": "kessler",
 		"relatedTo": "stuff",
+		"name": "react-native-file-logger",
+		"licensePeriod": "perpetual",
+		"material": "material",
+		"licenseType": "MIT",
+		"link": "git+https://github.com/BeTomorrow/react-native-file-logger.git",
+		"remoteVersion": "0.7.2",
+		"installedVersion": "0.7.2",
+		"definedVersion": "^0.7.2",
+		"author": "BeTomorrow <aguichard@betomorrow.com> (https://github.com/BeTomorrow)"
+	},
+	{
+		"department": "kessler",
+		"relatedTo": "stuff",
 		"name": "react-native-gesture-handler",
 		"licensePeriod": "perpetual",
 		"material": "material",
@@ -462,7 +475,7 @@
 		"material": "material",
 		"licenseType": "MIT",
 		"link": "git+https://github.com/react-native-maps/react-native-maps.git",
-		"remoteVersion": "1.26.20",
+		"remoteVersion": "1.27.1",
 		"installedVersion": "1.26.20",
 		"definedVersion": "^1.26.20",
 		"author": "Leland Richardson <leland.m.richardson@gmail.com>"
@@ -527,7 +540,7 @@
 		"material": "material",
 		"licenseType": "MIT",
 		"link": "git+https://github.com/react-native-community/react-native-svg.git",
-		"remoteVersion": "15.15.1",
+		"remoteVersion": "15.15.3",
 		"installedVersion": "15.15.1",
 		"definedVersion": "^15.15.1",
 		"author": "n/a"
