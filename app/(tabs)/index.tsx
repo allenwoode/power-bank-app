@@ -1,6 +1,4 @@
-import Banner from '@/components/home/banner';
 import { Device } from '@/components/home/device';
-import Header from '@/components/home/header';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
 import { LinearGradient } from 'expo-linear-gradient';
@@ -23,13 +21,7 @@ export default function HomeScreen() {
 			style={{ flex: 1 }}
 		>
 			<View className="flex-1">
-				<Header />
-				<View className="flex-shrink px-4">
-					<Banner />
-				</View>
-				<View className="flex-1">
-					<Device />
-				</View>
+				<Device />
 			</View>
 		</LinearGradient>
 	);

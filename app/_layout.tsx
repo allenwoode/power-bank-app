@@ -1,6 +1,10 @@
 import { NotificationProvider } from '@/context/notification-context';
 import { OnboardingContext } from '@/context/onboarding-context';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import {
+	DEVICE_HOME_ROUTE,
+	shouldRedirectToDeviceHome,
+} from '@/utils/device-only-mode';
 import { ActionSheetProvider } from '@expo/react-native-action-sheet';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
@@ -53,14 +57,10 @@ export default function RootLayout() {
 	useEffect(() => {
 		if (!isReady) return;
 
-		const inAuthGroup = segments[0] === '(welcome)';
-
-		if (hasSeenIntro === false && !inAuthGroup) {
-			router.replace('/(welcome)');
-		} else if (hasSeenIntro === true && inAuthGroup) {
-			router.replace('/(tabs)');
+		if (shouldRedirectToDeviceHome(isReady, segments)) {
+			router.replace(DEVICE_HOME_ROUTE);
 		}
-	}, [hasSeenIntro, isReady, segments, router]);
+	}, [isReady, router, segments]);
 
 	if (!isReady) {
 		return null;

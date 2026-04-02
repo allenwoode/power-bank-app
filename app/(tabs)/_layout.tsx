@@ -1,14 +1,9 @@
-import { CustomTabBar } from '@/components/custom-tab-bar';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Tabs, useFocusEffect } from 'expo-router';
-import { Home, User } from 'lucide-react-native';
 import React, { useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { BackHandler, Platform, ToastAndroid } from 'react-native';
 
 export default function TabLayout() {
-	const colorScheme = useColorScheme();
 	const { t } = useTranslation();
 
 	// 双击返回退出应用
@@ -47,26 +42,12 @@ export default function TabLayout() {
 	return (
 		<Tabs
 			screenOptions={{
-				tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
 				headerShown: false,
 			}}
-			tabBar={(props) => <CustomTabBar {...props} />}
+			tabBar={() => null}
 		>
-			<Tabs.Screen
-				name="index"
-				options={{
-					title: t('tab-home'),
-					tabBarIcon: ({ color }) => <Home size={28} color={color} />,
-				}}
-			/>
-
-			<Tabs.Screen
-				name="mine"
-				options={{
-					title: t('tab-mine'),
-					tabBarIcon: ({ color }) => <User size={28} color={color} />,
-				}}
-			/>
+			<Tabs.Screen name="index" options={{ title: t('tab-home') }} />
+			<Tabs.Screen name="mine" options={{ href: null }} />
 		</Tabs>
 	);
 }

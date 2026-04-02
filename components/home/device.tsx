@@ -12,6 +12,7 @@ import {
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FlatList, Pressable, ScrollView, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface DeviceItem {
 	id: string;
@@ -32,6 +33,7 @@ const DEMO_DEVICES: DeviceItem[] = [
 ];
 
 export function Device() {
+	const insets = useSafeAreaInsets();
 	const { t } = useTranslation();
 	const { push } = useDebouncedNavigation(500);
 	const colorScheme = useColorScheme();
@@ -97,7 +99,7 @@ export function Device() {
 	);
 
 	return (
-		<View className="flex-1">
+		<View className="flex-1" style={{ paddingTop: insets.top + 8 }}>
 			<View className="flex-row items-center justify-between px-6 py-4">
 				<Text className="text-2xl font-semibold text-black dark:text-white">
 					{t('device-title')}
