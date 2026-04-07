@@ -3,7 +3,10 @@ const assert = require('node:assert/strict');
 const { Buffer } = require('node:buffer');
 const {
 	buildBleDebugLogEntry,
+	canSendBleDebugCommand,
 	decodeBleDebugPayload,
+	getBleDebugChannelRole,
+	getBleDebugResponseChannelNotice,
 	getCharacteristicCapabilities,
 	resolveBleDebugSessionState,
 } = require('../utils/ble-debug');
@@ -50,5 +53,19 @@ assert.equal(logEntry.hex, '4142');
 assert.equal(logEntry.utf8, 'AB');
 assert.equal(logEntry.serviceUUID, 'service-1');
 assert.equal(logEntry.charUUID, 'char-1');
+
+assert.equal(canSendBleDebugCommand(true, true), true);
+assert.equal(canSendBleDebugCommand(true, false), false);
+assert.equal(canSendBleDebugCommand(false, true), false);
+
+assert.equal(getBleDebugChannelRole('0000fff1-abcd'), 'command');
+assert.equal(getBleDebugChannelRole('0000FFF2-abcd'), 'response');
+assert.equal(getBleDebugChannelRole('0000180f-0000'), null);
+
+assert.equal(getBleDebugResponseChannelNotice(true), null);
+assert.equal(
+	getBleDebugResponseChannelNotice(false),
+	'尚未选择设备回包通道，设备即使回包也不会被当前页面捕获'
+);
 
 console.log('ble-debug utils checks passed');

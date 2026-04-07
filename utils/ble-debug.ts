@@ -15,6 +15,8 @@ export type BleCharacteristicCapability =
 	| 'notify'
 	| 'indicate';
 
+export type BleDebugChannelRole = 'command' | 'response';
+
 export interface BleDebugLogEntry {
 	id: string;
 	timestamp: string;
@@ -123,4 +125,37 @@ export function buildBleDebugLogEntry({
 		hex: decoded?.hex,
 		utf8: decoded?.utf8 ?? null,
 	};
+}
+
+export function canSendBleDebugCommand(
+	isSessionReady: boolean,
+	hasSelectedCommandChannel: boolean
+): boolean {
+	return isSessionReady && hasSelectedCommandChannel;
+}
+
+export function getBleDebugResponseChannelNotice(
+	hasSelectedResponseChannel: boolean
+): string | null {
+	if (hasSelectedResponseChannel) {
+		return null;
+	}
+
+	return '尚未选择设备回包通道，设备即使回包也不会被当前页面捕获';
+}
+
+export function getBleDebugChannelRole(
+	charUUID: string
+): BleDebugChannelRole | null {
+	const normalized = charUUID.toLowerCase();
+
+	if (normalized.startsWith('0000fff1')) {
+		return 'command';
+	}
+
+	if (normalized.startsWith('0000fff2')) {
+		return 'response';
+	}
+
+	return null;
 }

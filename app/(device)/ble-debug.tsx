@@ -4,6 +4,9 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import BleService from '@/lib/ble-service';
 import {
 	buildBleDebugLogEntry,
+	canSendBleDebugCommand,
+	getBleDebugChannelRole,
+	getBleDebugResponseChannelNotice,
 	getCharacteristicCapabilities,
 	type BleDebugLogEntry,
 	resolveBleDebugSessionState,
@@ -93,6 +96,7 @@ export default function BleDebugPage() {
 
 					for (const characteristic of characteristics) {
 						const capabilities = getCharacteristicCapabilities(characteristic);
+						const channelRole = getBleDebugChannelRole(characteristic.uuid);
 						mappedOptions.push({
 							id: `${service.uuid}::${characteristic.uuid}`,
 							title: characteristic.uuid,
@@ -100,11 +104,13 @@ export default function BleDebugPage() {
 							serviceUUID: service.uuid,
 							charUUID: characteristic.uuid,
 							supportsSend:
-								characteristic.isWritableWithResponse === true ||
-								characteristic.isWritableWithoutResponse === true,
+								channelRole === 'command' &&
+								(characteristic.isWritableWithResponse === true ||
+									characteristic.isWritableWithoutResponse === true),
 							supportsReceive:
-								characteristic.isNotifiable === true ||
-								characteristic.isIndicatable === true,
+								channelRole === 'response' &&
+								(characteristic.isNotifiable === true ||
+									characteristic.isIndicatable === true),
 						});
 					}
 				}
@@ -166,6 +172,15 @@ export default function BleDebugPage() {
 		[receiveOptions, selectedReceiveOptionId]
 	);
 
+	const responseChannelNotice = getBleDebugResponseChannelNotice(
+		Boolean(selectedReceiveOption)
+	);
+
+	const canSendMessage = canSendBleDebugCommand(
+		isSessionReady,
+		Boolean(selectedSendOption && message.trim())
+	);
+
 	useEffect(() => {
 		if (!isSessionReady || !selectedReceiveOption) {
 			return;
@@ -175,7 +190,7 @@ export default function BleDebugPage() {
 			...prev,
 			buildBleDebugLogEntry({
 				direction: 'INFO',
-				message: '开始监听设备回包',
+				message: '开始监听设备回包通道',
 				serviceUUID: selectedReceiveOption.serviceUUID,
 				charUUID: selectedReceiveOption.charUUID,
 			}),
@@ -190,7 +205,7 @@ export default function BleDebugPage() {
 						...prev,
 						buildBleDebugLogEntry({
 							direction: 'RECV',
-							message: '收到设备回包',
+							message: '收到设备回包通道数据',
 							serviceUUID: selectedReceiveOption.serviceUUID,
 							charUUID: selectedReceiveOption.charUUID,
 							payload: data,
@@ -229,7 +244,7 @@ export default function BleDebugPage() {
 			...prev,
 			buildBleDebugLogEntry({
 				direction: 'SEND',
-				message: '手动发送消息',
+				message: '向命令发送通道写入消息',
 				serviceUUID: selectedSendOption.serviceUUID,
 				charUUID: selectedSendOption.charUUID,
 				payload,
@@ -310,30 +325,38 @@ export default function BleDebugPage() {
 						) : (
 							<>
 								<RadioSelect
-									title="发送通道"
+									title="命令发送通道"
 									options={sendOptions}
 									selectedId={selectedSendOptionId}
 									onSelect={setSelectedSendOptionId}
 								/>
 								{sendOptions.length === 0 && (
 									<Text className="mb-4 px-4 text-sm text-gray-500 dark:text-gray-400">
-										未找到可发送的特征值
+										未找到以 0000fff1 开头的命令发送通道
 									</Text>
 								)}
 								<RadioSelect
-									title="接收通道"
+									title="设备回包通道"
 									options={receiveOptions}
 									selectedId={selectedReceiveOptionId}
 									onSelect={setSelectedReceiveOptionId}
 								/>
 								{receiveOptions.length === 0 && (
 									<Text className="px-4 text-sm text-gray-500 dark:text-gray-400">
-										未找到可接收回包的特征值
+										未找到以 0000fff2 开头的设备回包通道
 									</Text>
 								)}
 							</>
 						)}
 					</View>
+
+					{responseChannelNotice && (
+						<View className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950/30">
+							<Text className="text-sm text-amber-700 dark:text-amber-200">
+								{responseChannelNotice}
+							</Text>
+						</View>
+					)}
 
 					<View className="mb-4 rounded-2xl bg-gray-100 p-4 dark:bg-gray-900">
 						<View className="mb-3 flex-row items-center gap-2">
@@ -366,9 +389,7 @@ export default function BleDebugPage() {
 
 						<Pressable
 							onPress={handleSend}
-							disabled={
-								!isSessionReady || !selectedSendOption || !message.trim()
-							}
+							disabled={!canSendMessage}
 							className="mt-3 items-center rounded-xl bg-blue-600 px-4 py-4 disabled:bg-gray-300 dark:disabled:bg-gray-700"
 						>
 							<Text className="text-base font-semibold text-white">
