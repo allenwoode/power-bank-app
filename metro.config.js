@@ -3,8 +3,9 @@ const { withNativeWind } = require('nativewind/metro');
 
 const config = getDefaultConfig(__dirname);
 
-config.resolver.sourceExts = ['ts', 'tsx', 'js', 'jsx', 'json', 'mjs'];
-config.resolver.assetExts = ['png', 'jpg', 'jpeg', 'gif', 'svg'];
+// 扩展默认配置，不要覆盖
+config.resolver.sourceExts = [...config.resolver.sourceExts, 'mjs'];
+config.resolver.assetExts = [...config.resolver.assetExts];
 
 // 处理 expo-notifications 的依赖问题
 config.resolver.unstable_enablePackageExports = true;
